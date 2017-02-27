@@ -25,11 +25,11 @@ import urllib.request
 import gzip
 import math
 
-def generate_data(file_path, write_path, num_batches, seq_length):
+def generate_data(file_path, write_path, num_batches):
     
     onehot_tok_idx = {}
     
-    tok_idx=1
+    tok_idx=0
 
     for i in range(0, num_batches):
         
@@ -44,43 +44,30 @@ def generate_data(file_path, write_path, num_batches, seq_length):
         
         print("...subtitles in memory for batch %d/%d"%(i+1, num_batches))
 
-        tok_idx_sent_batch = np.empty(shape=(len(sent), seq_length), dtype="int32")
-        seq_idx=seq_length-1
 
         for sent_idx in range(len(sent)-1, -1):
 
             sent_tok = re.findall(r"[\w]+|[^\s\w]", sent[sent_idx])
 
             for tok in sent_tok:
-                if seq_idx < 0:
-                    break
-
                 if tok not in onehot_tok_idx_en:
                     onehot_tok_idx[tok]=tok_idx
                     tok_idx+=1
 
-                tok_idx_sent_batch[sent_idx][seq_idx]=onehot_tok_idx[tok]
-
-                seq_idx-=1
 
         del sent
-        print("...subtitles cleaned, token id's assigned for batch %d/%d"%(i+1,num_batches))
+        print("...token id's assigned for batch %d/%d"%(i+1,num_batches))
 
-        np.save(write_path%('tok_idx_sent_batch_'+ str(i)), tok_idx_sent_batch)
-        print("...subtitles saved for batch %d/%d"%(i+1,num_batches))     
-    
-    np.save(writepath%('onehot', onehot_tok_idx))
+    np.save(write_path, onehot_tok_idx)
     print("...token id's saved")
 
 en_file_path = "data/english_subtitles.gz"
 fr_file_path = "data/french_subtitles.gz"
 
-en_write_path = "data/en_%s.npy"
-fr_write_path = "data/fr_%s.npy"
+en_write_path = "data/en_onehot.npy"
+fr_write_path = "data/fr_onehot.npy"
 
 num_batches = 5
-seq_length = 100
-tok_idx = 1
 
 print("processing english subtitles")
 
@@ -89,7 +76,7 @@ if not os.path.isfile(en_file_path):
 
 print("...subtitles downloaded")
 
-generate_data(en_file_path, en_write_path, num_batches, seq_length)
+generate_data(en_file_path, en_write_path, num_batches)
 
 
 print("processing french subtitles")
@@ -99,14 +86,4 @@ if not os.path.isfile(fr_file_path):
     
 print("...subtitles downloaded")
 
-out = generate_data(fr_file_path, fr_write_path, num_batches, seq_length)
-
-np.save(fr_onehot_path, out[0])
-
-print("...token id's saved")
-
-np.save(fr_tok_idx_sent_path, out[1])
-
-print("...subtitles saved")
-
-del out
+generate_data(fr_file_path, fr_write_path, num_batches)
