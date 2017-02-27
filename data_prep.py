@@ -65,10 +65,12 @@ for i in range(0,chunks):
     print("...subtitles cleaned, token id's assigned for batch %d/%d"(i+1,num_batches))
 
 np.save('data/onehot_tok_idx_en.npy', onehot_tok_idx_en)
+del onehot_tok_idx_en
 
 print("...token id's saved")
 
 np.save('data/tok_idx_sent_en.npy', tok_idx_sent_en)
+del tok_idx_sent_en
 
 print("...subtitles saved")
 
@@ -109,7 +111,9 @@ print("...subtitles cleaned, token id's assigned")
 np.save('data/onehot_tok_idx_fr.npy', onehot_tok_idx_fr)
 
 print("...token id's saved")
+del onehot_tok_idx_fr
 
 np.save('data/tok_idx_sent_fr.npy', tok_idx_sent_fr)
 
 print("...subtitles saved")
+del tok_idx_sent_fr
