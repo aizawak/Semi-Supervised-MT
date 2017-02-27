@@ -39,15 +39,19 @@ sent_en = english_content.split('\n')
 del english_content
 
 onehot_tok_idx_en = {}
+tok_idx_sent_en = []
+
 tok_idx = 0
 
 for sent_idx in range(0, len(sent_en)):
     sent_tok = re.findall(r"[\w]+|[^\s\w]", sent_en[sent_idx])
-    sent_en[sent_idx]=" ".join(sent_tok)
     for tok in sent_tok:
         if tok not in onehot_tok_idx_en:
             onehot_tok_idx_en[tok]=tok_idx
             tok_idx+=1
+    tok_idx_sent_en.append([onehot_tok_idx_en[tok] for tok in sent_tok])
+
+del sent_en
 
 print("...subtitles cleaned, token id's assigned")
 
@@ -55,7 +59,7 @@ np.save('data/onehot_tok_idx_en.npy', onehot_tok_idx_en)
 
 print("...token id's saved")
 
-np.save('data/sent_en.npy', sent_en)
+np.save('data/tok_idx_sent_en.npy', tok_idx_sent_en)
 
 print("...subtitles saved")
 
@@ -77,15 +81,19 @@ sent_fr = french_content.split('\n')
 del french_content
 
 onehot_tok_idx_fr = {}
+tok_idx_sent_en = []
+
 tok_idx = 0
 
 for sent_idx in range(0, len(sent_fr)):
     sent_tok = re.findall(r"[\w]+|[^\s\w]", sent_fr[sent_idx])
-    sent_fr[sent_idx]=" ".join(sent_tok)
     for tok in sent_tok:
         if tok not in onehot_tok_idx_fr:
             onehot_tok_idx_fr[tok]=tok_idx
             tok_idx+=1
+    tok_idx_sent_fr.append([onehot_tok_idx_fr[tok] for tok in sent_tok])
+
+del sent_fr
 
 print("...subtitles cleaned, token id's assigned")
 
@@ -93,6 +101,6 @@ np.save('data/onehot_tok_idx_fr.npy', onehot_tok_idx_fr)
 
 print("...token id's saved")
 
-np.save('data/sent_fr.npy', sent_fr)
+np.save('data/tok_idx_sent_fr.npy', tok_idx_sent_fr)
 
 print("...subtitles saved")

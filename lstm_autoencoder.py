@@ -1,15 +1,17 @@
 import tensorflow as tf
 import numpy as np
 
-onehot_tok_idx_en = np.load('data/onehot_tok_idx_en.npy').item()
-onehot_tok_idx_fr = np.load('data/onehot_tok_idx_fr.npy').item()
+# english
+# sent = np.load('data/sent_en.npy').item()
+# onehot_tok_idx = np.load('data/onehot_tok_idx_en.npy').item()
 
-sent_en = np.load('data/sent_en.npy').item()
-sent_fr = np.load('data/sent_fr.npy').item()
+# french
+sent = np.load('data/sent_fr.npy').item()
+onehot_tok_idx = np.load('data/onehot_tok_idx_fr.npy').item()
 
 # Build LSTM graph
 
-vocab_size = len(onehot_tok_idx_fr)
+vocab_size = len(onehot_tok_idx)
 num_layers = 8
 num_steps = 2000
 hidden_size = 500
