@@ -1,85 +1,11 @@
-
-# coding: utf-8
-
-# Wiki Data Dump
-# https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles.xml.bz2
-
-# Amazon Product Reviews
-# https://snap.stanford.edu/data/web-Amazon.htmls
-
-# Book Data
-# English Books
-# http://opus.lingfil.uu.se/download.php?f=Books/en.tar.gz
-# French Books
-# http://opus.lingfil.uu.se/download.php?f=Books/fr.tar.gz
-
-# English movie subtitles
-# http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.en.gz
-
-# French movie subtitles
-# http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.fr.gz   
-
-# you want to remove the apostrophes treat as separate words for french
-
-# you also want to treat punctuation as separate words.
-
-import os
-from random import shuffle
-import re
-import collections
-import urllib.request
-import gzip
-
-
 import tensorflow as tf
 import numpy as np
 
-# Download data
+onehot_tok_idx_en = np.load('data/onehot_tok_idx_en.npy').item()
+onehot_tok_idx_fr = np.load('data/onehot_tok_idx_fr.npy').item()
 
-# Download the dataset if it's not already there
-if not os.path.isfile("data/english_subtitles.gz"):
-    urllib.request.urlretrieve("http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.en.gz", filename="data/english_subtitles.gz")
-
-if not os.path.isfile("data/french_subtitles.gz"):
-    urllib.request.urlretrieve("http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.fr.gz", filename="data/french_subtitles.gz")
-    
-print("data downloaded")
-
-#with gzip.open('data/english_subtitles.gz', 'rb') as f:
-#    english_content = f.read().decode('utf-8')
-
-#print("english data loaded"
-
-#sent_en = english_content.split('\n')
-
-#sent_tok_en = []
-
-#for sent in sent_en:
-#    sent_tok_en.append(sent.split(' '))
-
-with gzip.open('data/french_subtitles.gz', 'rb') as f:
-    french_content = f.read().decode('utf-8')
-
-print("french data loaded")
-
-sent_fr = french_content.split('\n')
-del french_content
-
-onehot_tok_idx_fr = {}
-tok_idx = 0
-
-for sent_idx in range(0, len(sent_fr)):
-    sent_tok = re.findall(r"[\w]+|[^\s\w]", sent_fr[sent_idx])
-    sent_fr[sent_idx]=" ".join(sent_tok)
-    for tok in sent_tok:
-        if tok not in onehot_tok_idx_fr:
-            onehot_tok_idx_fr[tok]=tok_idx
-            tok_idx+=1
-
-print("data cleaned and one-hot preprocessing complete")
-
-print(len(onehot_tok_idx_fr))
-
+sent_en = np.load('data/sent_en.npy').item()
+sent_fr = np.load('data/sent_fr.npy').item()
 
 # Build LSTM graph
 
