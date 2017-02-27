@@ -22,98 +22,99 @@ import re
 import collections
 import urllib.request
 import gzip
+import math
 
-print("processing english subtitles")
+def generate_data(file_path, num_batches, seq_length):
+    
+    onehot_tok_idx = {}
+    tok_idx_sent = np.empty(shape=(len(sent), seq_length), dtype="int32")
 
-if not os.path.isfile("data/english_subtitles.gz"):
-    urllib.request.urlretrieve("http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.en.gz", filename="data/english_subtitles.gz")
+    tok_idx=1
 
-print("...subtitles downloaded")
+    for i in range(0, num_batches):
+        
+        with gzip.open(file_path, 'rb') as f:
+            content = f.read()
+        
+        start = math.floor(i * len(english_content) / num_batches)
+        end = math.floor((i + 1) * len(english_content) / num_batches)
 
-num_batches = 5
+        print("...subtitles in memory for batch %d/%d"%(i+1, num_batches))
 
-onehot_tok_idx_en = {}
-tok_idx_sent_en = []
+        sent = content.split('\n')
+        del content
 
-tok_idx = 0
+        seq_idx=seq_length-1
 
-for i in range(0,num_batches):
+        for sent_idx in range(len(sent)-1, -1):
 
-    with gzip.open('data/english_subtitles.gz', 'rb') as f:
-        english_content = f.read()
+            sent_tok = re.findall(r"[\w]+|[^\s\w]", sent[sent_idx])
 
-    start = int(i * len(english_content) / num_batches)
-    end = min(int((i + 1) * len(english_content) / num_batches), len(english_content)-1)
+            for tok in sent_tok:
+                if seq_idx < 0:
+                    break
 
-    english_content = english_content[start:end].decode('utf-8')
+                if tok not in onehot_tok_idx_en:
+                    onehot_tok_idx[tok]=tok_idx
+                    tok_idx+=1
 
-    print("...subtitles in memory")
+                tok_idx_sent[sent_idx][seq_idx]=onehot_tok_idx[tok]
 
-    sent_en = english_content.split('\n')
-    del english_content
+                seq_idx-=1
 
-    for sent_idx in range(0, len(sent_en)):
-        sent_tok = re.findall(r"[\w]+|[^\s\w]", sent_en[sent_idx])
-        for tok in sent_tok:
-            if tok not in onehot_tok_idx_en:
-                onehot_tok_idx_en[tok]=tok_idx
-                tok_idx+=1
-        tok_idx_sent_en.append([onehot_tok_idx_en[tok] for tok in sent_tok])
-
-    del sent_en
+        del sent
 
     print("...subtitles cleaned, token id's assigned for batch %d/%d"%(i+1,num_batches))
 
-np.save('data/onehot_tok_idx_en.npy', onehot_tok_idx_en)
-del onehot_tok_idx_en
+    return (onehot_tok_idx, tok_idx_sent)
+
+en_file_path = "data/english_subtitles.gz"
+fr_file_path = "data/french_subtitles.gz"
+
+en_onehot_path = "data/en_onehot.npy"
+fr_onehot_path = "data/fr_onehot.npy"
+
+en_tok_idx_sent_path = "data/en_tok_idx_sent.npy"
+fr_tok_idx_sent_path = "data/fr_tok_idx_sent.npy"
+
+num_batches = 5
+seq_length = 100
+tok_idx = 1
+
+print("processing english subtitles")
+
+if not os.path.isfile(en_file_path):
+    urllib.request.urlretrieve("http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.en.gz", filename=en_file_path)
+
+print("...subtitles downloaded")
+
+out = generate_data(en_file_path, num_batches, seq_length)
+
+np.save(en_onehot_path, out[0])
 
 print("...token id's saved")
 
-np.save('data/tok_idx_sent_en.npy', tok_idx_sent_en)
-del tok_idx_sent_en
+np.save(en_tok_idx_sent_path, out[1])
 
 print("...subtitles saved")
 
-
+del out
 
 print("processing french subtitles")
 
-if not os.path.isfile("data/french_subtitles.gz"):
-    urllib.request.urlretrieve("http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.fr.gz", filename="data/french_subtitles.gz")
+if not os.path.isfile(fr_file_path):
+    urllib.request.urlretrieve("http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.fr.gz", filename=fr_file_path)
     
 print("...subtitles downloaded")
 
-with gzip.open('data/french_subtitles.gz', 'rb') as f:
-    french_content = f.read().decode('utf-8')
+out = generate_data(fr_file_path, num_batches, seq_length)
 
-print("...subtitles in memory")
-
-sent_fr = french_content.split('\n')
-del french_content
-
-onehot_tok_idx_fr = {}
-tok_idx_sent_en = []
-
-tok_idx = 0
-
-for sent_idx in range(0, len(sent_fr)):
-    sent_tok = re.findall(r"[\w]+|[^\s\w]", sent_fr[sent_idx])
-    for tok in sent_tok:
-        if tok not in onehot_tok_idx_fr:
-            onehot_tok_idx_fr[tok]=tok_idx
-            tok_idx+=1
-    tok_idx_sent_fr.append([onehot_tok_idx_fr[tok] for tok in sent_tok])
-
-del sent_fr
-
-print("...subtitles cleaned, token id's assigned")
-
-np.save('data/onehot_tok_idx_fr.npy', onehot_tok_idx_fr)
-del onehot_tok_idx_fr
+np.save(fr_onehot_path, out[0])
 
 print("...token id's saved")
 
-np.save('data/tok_idx_sent_fr.npy', tok_idx_sent_fr)
-del tok_idx_sent_fr
+np.save(fr_tok_idx_sent_path, out[1])
 
 print("...subtitles saved")
+
+del out
