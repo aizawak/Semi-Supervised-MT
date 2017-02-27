@@ -1,8 +1,6 @@
 
 # coding: utf-8
 
-# In[ ]:
-
 # Wiki Data Dump
 # https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles.xml.bz2
 
@@ -15,17 +13,15 @@
 # French Books
 # http://opus.lingfil.uu.se/download.php?f=Books/fr.tar.gz
 
-
-# In[ ]:
-
 # English movie subtitles
 # http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.en.gz
 
 # French movie subtitles
 # http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.fr.gz   
 
+# you want to remove the apostrophes treat as separate words for french
 
-# In[ ]:
+# you also want to treat punctuation as separate words.
 
 import os
 from random import shuffle
@@ -47,15 +43,42 @@ if not os.path.isfile("data/english_subtitles.gz"):
 if not os.path.isfile("data/french_subtitles.gz"):
     urllib.request.urlretrieve("http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.fr.gz", filename="data/french_subtitles.gz")
     
-with gzip.open('data/english_subtitles.gz', 'rb') as f:
-    english_content = f.read()
-    
-with gzip.open('data/french_subtitles.gz', 'rb') as f:
-    french_content = f.read()
-
 print("data downloaded")
 
-print(english_content[0])
+#with gzip.open('data/english_subtitles.gz', 'rb') as f:
+#    english_content = f.read().decode('utf-8')
+
+#print("english data loaded"
+
+#sent_en = english_content.split('\n')
+
+#sent_tok_en = []
+
+#for sent in sent_en:
+#    sent_tok_en.append(sent.split(' '))
+
+with gzip.open('data/french_subtitles.gz', 'rb') as f:
+    french_content = f.read().decode('utf-8')
+
+print("french data loaded")
+
+sent_fr = french_content.split('\n')
+
+sent_tok_fr = []
+
+for sent in sent_fr:
+    sent_tok_fr.append(sent.split(' '))
+
+onehot_tok_idx_fr = {}
+tok_idx = 0
+for sent in sent_tok_fr:
+    for tok in sent:
+        if tok not in onehot_tok_idx_fr:
+            onehot_tok_idx_fr[tok]=tok_idx
+            tok_idx+=1
+
+print(len(onehot_tok_idx_fr))
+
 
 # # Build LSTM graph
 
