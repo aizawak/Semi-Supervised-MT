@@ -50,7 +50,7 @@ def generate_data(file_path, write_path, num_batches):
             sent_tok = re.findall(r"[\w]+|[^\s\w]", sent[sent_idx])
 
             for tok in sent_tok:
-                if tok not in onehot_tok_idx_en:
+                if tok not in onehot_tok_idx:
                     onehot_tok_idx[tok]=tok_idx
                     tok_idx+=1
 
