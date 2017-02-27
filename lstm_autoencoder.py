@@ -35,17 +35,12 @@ import urllib.request
 import gzip
 
 
-# In[ ]:
-
 import tensorflow as tf
 import numpy as np
 
-
-# In[ ]:
-
 # Download data
 
-# Download the dataset if it's not already there: this may take a minute as it is 75MB
+# Download the dataset if it's not already there
 if not os.path.isfile("data/english_subtitles.gz"):
     urllib.request.urlretrieve("http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.en.gz", filename="data/english_subtitles.gz")
 
@@ -60,19 +55,7 @@ with gzip.open('data/french_subtitles.gz', 'rb') as f:
 
 print("data downloaded")
 
-
-count = 0
-for line in english_content:
-	if count%1000==0:
-		print("hello!")
-
-
-# In[ ]:
-
-
-
-
-# In[ ]:
+print(english_content[0])
 
 # # Build LSTM graph
 
