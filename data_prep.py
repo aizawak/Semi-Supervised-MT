@@ -30,30 +30,39 @@ if not os.path.isfile("data/english_subtitles.gz"):
 
 print("...subtitles downloaded")
 
-with gzip.open('data/english_subtitles.gz', 'rb') as f:
-    english_content = f.read().decode('utf-8')
-
-print("...subtitles in memory")
-
-sent_en = english_content.split('\n')
-del english_content
+num_batches = 5
 
 onehot_tok_idx_en = {}
 tok_idx_sent_en = []
 
 tok_idx = 0
 
-for sent_idx in range(0, len(sent_en)):
-    sent_tok = re.findall(r"[\w]+|[^\s\w]", sent_en[sent_idx])
-    for tok in sent_tok:
-        if tok not in onehot_tok_idx_en:
-            onehot_tok_idx_en[tok]=tok_idx
-            tok_idx+=1
-    tok_idx_sent_en.append([onehot_tok_idx_en[tok] for tok in sent_tok])
+for i in range(0,chunks):
 
-del sent_en
+    with gzip.open('data/english_subtitles.gz', 'rb') as f:
+        english_content = f.read()
 
-print("...subtitles cleaned, token id's assigned")
+    start = int(i * len(english_content) / num_batches)
+    end = int((i + 1) * len(english_content) / num_batches)
+
+    english_content = english_content[start:end].decode('utf-8')
+
+    print("...subtitles in memory")
+
+    sent_en = english_content.split('\n')
+    del english_content
+
+    for sent_idx in range(0, len(sent_en)):
+        sent_tok = re.findall(r"[\w]+|[^\s\w]", sent_en[sent_idx])
+        for tok in sent_tok:
+            if tok not in onehot_tok_idx_en:
+                onehot_tok_idx_en[tok]=tok_idx
+                tok_idx+=1
+        tok_idx_sent_en.append([onehot_tok_idx_en[tok] for tok in sent_tok])
+
+    del sent_en
+
+    print("...subtitles cleaned, token id's assigned for batch %d/%d"(i+1,num_batches))
 
 np.save('data/onehot_tok_idx_en.npy', onehot_tok_idx_en)
 
