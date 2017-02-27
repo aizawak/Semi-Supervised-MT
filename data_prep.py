@@ -16,6 +16,7 @@
 # French movie subtitles
 # http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.fr.gz   
 
+import numpy as np
 import os
 from random import shuffle
 import re
@@ -25,6 +26,11 @@ import gzip
 import math
 
 def generate_data(file_path, num_batches, seq_length):
+    with gzip.open(file_path, 'rb') as f:
+        content = f.read()
+
+    sent = content.split('\n')
+    del content
     
     onehot_tok_idx = {}
     tok_idx_sent = np.empty(shape=(len(sent), seq_length), dtype="int32")
@@ -33,16 +39,12 @@ def generate_data(file_path, num_batches, seq_length):
 
     for i in range(0, num_batches):
         
-        with gzip.open(file_path, 'rb') as f:
-            content = f.read()
         
-        start = math.floor(i * len(english_content) / num_batches)
-        end = math.floor((i + 1) * len(english_content) / num_batches)
+        start = math.floor(i * len(sent) / num_batches)
+        end = math.floor((i + 1) * len(sent) / num_batches)
 
         print("...subtitles in memory for batch %d/%d"%(i+1, num_batches))
 
-        sent = content.split('\n')
-        del content
 
         seq_idx=seq_length-1
 
