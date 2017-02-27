@@ -37,13 +37,13 @@ tok_idx_sent_en = []
 
 tok_idx = 0
 
-for i in range(0,chunks):
+for i in range(0,num_batches):
 
     with gzip.open('data/english_subtitles.gz', 'rb') as f:
         english_content = f.read()
 
     start = int(i * len(english_content) / num_batches)
-    end = int((i + 1) * len(english_content) / num_batches)
+    end = min(int((i + 1) * len(english_content) / num_batches), len(english_content)-1)
 
     english_content = english_content[start:end].decode('utf-8')
 
@@ -62,7 +62,7 @@ for i in range(0,chunks):
 
     del sent_en
 
-    print("...subtitles cleaned, token id's assigned for batch %d/%d"(i+1,num_batches))
+    print("...subtitles cleaned, token id's assigned for batch %d/%d"%(i+1,num_batches))
 
 np.save('data/onehot_tok_idx_en.npy', onehot_tok_idx_en)
 del onehot_tok_idx_en
@@ -109,11 +109,11 @@ del sent_fr
 print("...subtitles cleaned, token id's assigned")
 
 np.save('data/onehot_tok_idx_fr.npy', onehot_tok_idx_fr)
-
-print("...token id's saved")
 del onehot_tok_idx_fr
 
+print("...token id's saved")
+
 np.save('data/tok_idx_sent_fr.npy', tok_idx_sent_fr)
+del tok_idx_sent_fr
 
 print("...subtitles saved")
-del tok_idx_sent_fr
