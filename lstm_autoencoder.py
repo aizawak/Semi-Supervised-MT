@@ -63,29 +63,30 @@ with gzip.open('data/french_subtitles.gz', 'rb') as f:
 print("french data loaded")
 
 sent_fr = french_content.split('\n')
-
-sent_tok_fr = []
-
-for sent in sent_fr:
-    sent_tok_fr.append(sent.split(' '))
+del french_content
 
 onehot_tok_idx_fr = {}
 tok_idx = 0
-for sent in sent_tok_fr:
-    for tok in sent:
+
+for sent_idx in range(0, len(sent_fr)):
+    sent_tok = re.findall(r"[\w]+|[^\s\w]", sent_fr[sent_idx])
+    sent_fr[sent_idx]=" ".join(sent_tok)
+    for tok in sent_tok:
         if tok not in onehot_tok_idx_fr:
             onehot_tok_idx_fr[tok]=tok_idx
             tok_idx+=1
 
+print("data cleaned and one-hot preprocessing complete")
+
 print(len(onehot_tok_idx_fr))
 
 
-# # Build LSTM graph
+# Build LSTM graph
 
-# vocab_size = 100000
-# num_layers = 8
-# num_steps = 2000
-# hidden_size = 500
+vocab_size = len(onehot_tok_idx_fr)
+num_layers = 8
+num_steps = 2000
+hidden_size = 500
 
 
 # def length(sequence):
