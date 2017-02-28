@@ -25,10 +25,23 @@ import urllib.request
 import gzip
 import math
 
-def read_data(file_path, write_path, num_batches):
+def read_data(file_path, write_path, num_batches, min_count):
     
     with gzip.open(file_path, 'rb') as f:
             content = f.read()
+    
+    tok_counts = collections.Counter()
+
+    for i in range(0, num_batches):
+        start = math.floor(i * len(content) / num_batches)
+        end = math.floor(i + 1) * len(content) / num_batches)
+    
+        toks = re.findall(r"[\w]+|[^\s\w]", content[start:end].decode('utf-8'))
+
+        for tok in toks:
+            tok_counts[tok]+=1
+    
+    print("...tokens counted")
 
     onehot_tok_idx = {}
     
@@ -48,6 +61,8 @@ def read_data(file_path, write_path, num_batches):
             sent_tok = re.findall(r"[\w]+|[^\s\w]", sent[sent_idx])
 
             for tok in sent_tok:
+                if tok_counts[tok] < min_count:
+                   tok = "UNKNOWNTEXT"
                 if tok not in onehot_tok_idx:
                     onehot_tok_idx[tok]=tok_idx
                     tok_idx+=1
@@ -89,7 +104,7 @@ def data_iterator(file_path, onehot_tok_idx, num_batches, batch_size, seq_length
                         tok = sent_tok[tok_idx]
 
                         if tok not in onehot_tok_idx:
-                            continue
+                            tok = "UNKNOWNTEXT"
                         
                         onehot_seq_batch[batch_idx][seq_idx][onehot_tok_idx[tok]] = 1
                         labels_batch[batch_idx][seq_idx] = onehot_tok_idx[tok]
@@ -105,6 +120,7 @@ if __name__ == "__main__":
     fr_write_path = "data/fr_onehot.npy"
 
     num_batches = 5
+    min_count = 10
 
     print("processing english subtitles")
 
@@ -113,7 +129,7 @@ if __name__ == "__main__":
 
     print("...subtitles downloaded")
 
-    read_data(en_file_path, en_write_path, num_batches)
+    read_data(en_file_path, en_write_path, num_batches, min_count)
 
 
     print("processing french subtitles")
