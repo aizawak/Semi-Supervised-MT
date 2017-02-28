@@ -21,32 +21,32 @@ def length(sequence):
     return length
 
 vocab_size = len(onehot_tok_idx)
-num_layers = 8
-num_steps = 100
-batch_size = 50
-hidden_size = 2000
+num_layers = 4
+num_steps = 20
+batch_size = 1
+hidden_size = 500
 
 # batch_size x num_steps x vocab_size with post-padding
 raw_sequence = tf.placeholder(tf.float16, shape=(
-    None, num_steps, vocab_size), name="placeholder_raw_sequence")
+    batch_size, num_steps, vocab_size), name="placeholder_raw_sequence")
 
 # encoder_inputs must be a 3D tensor [num_steps x batch_size x vocab_size]
-encoder_inputs = tf.reshape(raw_sequence, [1, 0, 2])
+encoder_inputs = tf.transpose(raw_sequence, [1, 0, 2])
 
 # decoder_inputs must be a list of 2D tensors [batch_size x
 # vocab_size] of length num_steps
 decoder_inputs = tf.unstack(encoder_inputs, axis=0)
 decoder_inputs = (
-    [tf.zeros_like(labels[0], name="GO")] + labels[:-1])
+    [tf.zeros_like(decoder_inputs[0], name="GO")] + decoder_inputs[:-1])
 
 # labels must be a list of 1D tensors [batch_size] of length num_steps
-raw_labels = tf.placeholder(tf.int32, shape=(None, num_steps), name="placeholder_raw_labels")
-labels = tf.unstack(raw_labels, axis=0)
+raw_labels = tf.placeholder(tf.int32, shape=(batch_size, num_steps), name="placeholder_raw_labels")
+labels = tf.unstack(raw_labels, axis=1)
 
 # tf.reduce_max() collapses one-hot dimension to max (1 if used step or 0 if unused step)
 # tf.sign() to convert max value to 1
 # tensor of shape: [ batch_size x num_steps ]
-used_frames = tf.sign(tf.reduce_max(tf.abs(sequence), axis=2))
+used_frames = tf.sign(tf.reduce_max(tf.abs(raw_sequence), axis=2))
 
 # tf.reduce_sum() collapses indicator dimension (1 if used step or 0 if unused step) by summing values
 # tf.cast() to convert to type tf.int32
@@ -63,26 +63,34 @@ decoder_weights = tf.unstack(tf.cast(used_frames, tf.float16), axis=1)
 # labels = encoder_inputs
 
 lstm = tf.contrib.rnn.BasicLSTMCell(
-    hidden_size, forget_bias=0, state_is_tuple=True)
+    hidden_size, forget_bias=0.0, state_is_tuple=True)
 stacked_lstm = tf.contrib.rnn.MultiRNNCell(
     [lstm] * num_layers, state_is_tuple=True)
 
+initial_state = stacked_lstm.zero_state(batch_size, dtype=tf.float16)
+
 encoder_outputs, encoder_state = tf.nn.dynamic_rnn(
-    stacked_lstm, encoder_inputs, dtype=tf.float16, sequence_length=length(encoder_inputs))
+    stacked_lstm, raw_sequence, initial_state=initial_state, dtype=tf.float16, sequence_length=encoder_sequence_lengths)
 
 outputs, state = tf.contrib.legacy_seq2seq.rnn_decoder(
-    decoder_inputs=decoder_inputs, initial_state=encoder_state, cell=stacked_lstm, dtype=tf.float16)
+    decoder_inputs=decoder_inputs, initial_state=encoder_state, cell=stacked_lstm)
 
 loss = tf.contrib.legacy_seq2seq.sequence_loss(logits=outputs, targets=labels, weights=decoder_weights)
 
 optimizer = tf.train.AdamOptimizer(1e-4)
 train_op = optimizer.minimize(loss)
 
-iter_ = data_iterator(fr_file_path, onehot_tok_idx, batch_size, num_steps)
+print("graph loaded")
 
-saver = tf.train.Saver()
+iter_ = data_iterator(fr_file_path, onehot_tok_idx, 1,batch_size, num_steps)
 
-sess.run(tf.initialize_all_variables())
+print("iterator loaded")
+
+# saver = tf.train.Saver()
+
+init = tf.global_variables_initializer()
+
+print("variables initialized")
 
 with tf.Session() as sess:
     sess.run(init)
