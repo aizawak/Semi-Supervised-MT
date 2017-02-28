@@ -19,17 +19,19 @@ num_steps = 100
 batch_size = 50
 hidden_size = 2000
 
-seq_input = tf.placeholder(
-    tf.int32, [num_steps, batch_size, vocab_size], name="sequence_placeholder")
+# seq_length x batch_size x vocab_size
 
-encoder_inputs = [tf.reshape(seq_input, [-1, vocab_size])]
+encoder_inputs = [tf.placeholder(tf.int32, shape=(
+    None,), name="inp%i" % t)for t in range(seq_length)]
 
-labels = [tf.reshape(seq_input, [-1, vocab_size])]
+labels = [tf.placeholder(tf.int32, shape=(
+    None,), name="inp%i" % t)for t in range(seq_length)]
 
-weights = [tf.ones_like(label, dtype=tf.float16) for label in labels]
+weights = [tf.ones_like(labels_t, dtype=tf.float16)
+           for labels_t in labels]
 
-decoder_inputs = (
-    [tf.zeros_like(encoder_inputs[0], name="GO")] + encoder_inputs[:-1])
+decoder_inputs = ([tf.zeros_like(encoder_inputs[0], dtype=np.int32, name="GO")]
+                  + enc_inp[:-1])
 
 lstm = tf.contrib.rnn.BasicLSTMCell(
     hidden_size, forget_bias=0, state_is_tuple=True)
@@ -48,7 +50,7 @@ loss = tf.contrib.legacy_seq2seq.sequence_loss(
 optimizer = tf.train.AdamOptimizer(1e-4)
 train_op = optimizer.minimize(loss)
 
-iter_ = data_iterator(fr_file_path, onehot_tok_idx,batch_size, num_steps)
+iter_ = data_iterator(fr_file_path, onehot_tok_idx, batch_size, num_steps)
 
 saver = tf.train.Saver()
 
@@ -59,11 +61,9 @@ with tf.Session() as sess:
     for i in range(200000):
         sequences_batch = iter_.__next__()
 
-        if (i+1)%100==0:
-            train_accuracy = loss.eval(session = sess, feed_dict={encoder_inputs: sequences_batch, labels: sequences_batch})
-            print("step %d, training loss %g"%(i+1, train_accuracy))
+        if (i + 1) % 100 == 0:
+            train_accuracy = loss.eval(session=sess, feed_dict={
+                                       encoder_inputs: sequences_batch, labels: sequences_batch})
+            print("step %d, training loss %g" % (i + 1, train_accuracy))
 
-        optimizer.run(session = sess, feed_dict={seq_input: sequences_batch})
-
-
-
+        optimizer.run(session=sess, feed_dict={seq_input: sequences_batch})

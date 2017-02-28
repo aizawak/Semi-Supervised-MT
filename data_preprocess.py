@@ -90,7 +90,7 @@ def data_iterator(file_path, onehot_tok_idx, num_batches, batch_size, seq_length
                             continue
                         
                         onehot_seq_batch[seq_idx][batch_idx][onehot_tok_idx[tok]] = 1
-                    yield onehot_seq_batch
+                    yield np.reshape(onehot_seq_batch, [-1, len(onehot_tok_idx)])
 
 if __name__ == "__main__":
     
