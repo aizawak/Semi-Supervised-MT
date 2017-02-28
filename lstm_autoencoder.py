@@ -13,39 +13,67 @@ fr_file_path = "data/french_subtitles.gz"
 
 # Build LSTM graph
 
+
+def length(sequence):
+    used = tf.sign(tf.reduce_max(tf.abs(sequence), reduction_indices=2))
+    length = tf.reduce_sum(used, reduction_indices=1)
+    length = tf.cast(length, tf.int32)
+    return length
+
 vocab_size = len(onehot_tok_idx)
 num_layers = 8
 num_steps = 100
 batch_size = 50
 hidden_size = 2000
 
-# seq_length x batch_size x vocab_size
+# batch_size x num_steps x vocab_size with post-padding
+raw_sequence = tf.placeholder(tf.float16, shape=(
+    None, num_steps, vocab_size), name="placeholder_raw_sequence")
 
-encoder_inputs = [tf.placeholder(tf.int32, shape=(
-    None,), name="inp%i" % t)for t in range(seq_length)]
+# encoder_inputs must be a 3D tensor [num_steps x batch_size x vocab_size]
+encoder_inputs = tf.reshape(raw_sequence, [1, 0, 2])
 
-labels = [tf.placeholder(tf.int32, shape=(
-    None,), name="inp%i" % t)for t in range(seq_length)]
+# decoder_inputs must be a list of 2D tensors [batch_size x
+# vocab_size] of length num_steps
+decoder_inputs = tf.unstack(encoder_inputs, axis=0)
+decoder_inputs = (
+    [tf.zeros_like(labels[0], name="GO")] + labels[:-1])
 
-weights = [tf.ones_like(labels_t, dtype=tf.float16)
-           for labels_t in labels]
+# labels must be a list of 1D tensors [batch_size] of length num_steps
+raw_labels = tf.placeholder(tf.int32, shape=(None, num_steps), name="placeholder_raw_labels")
+labels = tf.unstack(raw_labels, axis=0)
 
-decoder_inputs = ([tf.zeros_like(encoder_inputs[0], dtype=np.int32, name="GO")]
-                  + enc_inp[:-1])
+# tf.reduce_max() collapses one-hot dimension to max (1 if used step or 0 if unused step)
+# tf.sign() to convert max value to 1
+# tensor of shape: [ batch_size x num_steps ]
+used_frames = tf.sign(tf.reduce_max(tf.abs(sequence), axis=2))
+
+# tf.reduce_sum() collapses indicator dimension (1 if used step or 0 if unused step) by summing values
+# tf.cast() to convert to type tf.int32
+# tensor of shape: [ batch_size ]
+encoder_sequence_lengths = tf.cast(tf.reduce_sum(
+    used_frames, reduction_indices=1), tf.int32)
+
+# tf.transpose() takes transpose
+# tf.cast() to convert to type tf.float16
+# tf.unstack() to create list of 1D tensors
+# list of 1D tensors of shape: [ batch_size ] of length num_steps
+decoder_weights = tf.unstack(tf.cast(used_frames, tf.float16), axis=1)
+
+# labels = encoder_inputs
 
 lstm = tf.contrib.rnn.BasicLSTMCell(
     hidden_size, forget_bias=0, state_is_tuple=True)
 stacked_lstm = tf.contrib.rnn.MultiRNNCell(
     [lstm] * num_layers, state_is_tuple=True)
 
-outputs, state = tf.contrib.legacy_seq2seq.basic_rnn_seq2seq(
-    encoder_inputs=encoder_inputs, decoder_inputs=decoder_inputs, cell=stacked_lstm, dtype=tf.float16)
+encoder_outputs, encoder_state = tf.nn.dynamic_rnn(
+    stacked_lstm, encoder_inputs, dtype=tf.float16, sequence_length=length(encoder_inputs))
 
-# outputs_test, state_test = tf.contrib.legacy_seq2seq.basic_rnn_seq2seq(
-#    encoder_inputs, decoder_inputs, stacked_lstm, feed_previous=True)
+outputs, state = tf.contrib.legacy_seq2seq.rnn_decoder(
+    decoder_inputs=decoder_inputs, initial_state=encoder_state, cell=stacked_lstm, dtype=tf.float16)
 
-loss = tf.contrib.legacy_seq2seq.sequence_loss(
-    outputs, labels, weights, vocab_size)
+loss = tf.contrib.legacy_seq2seq.sequence_loss(logits=outputs, targets=labels, weights=decoder_weights)
 
 optimizer = tf.train.AdamOptimizer(1e-4)
 train_op = optimizer.minimize(loss)
@@ -59,11 +87,11 @@ sess.run(tf.initialize_all_variables())
 with tf.Session() as sess:
     sess.run(init)
     for i in range(200000):
-        sequences_batch = iter_.__next__()
+        sequences_batch,labels_batch = iter_.__next__()
 
         if (i + 1) % 100 == 0:
             train_accuracy = loss.eval(session=sess, feed_dict={
-                                       encoder_inputs: sequences_batch, labels: sequences_batch})
+                                       raw_sequence: sequences_batch, raw_labels: labels_batch})
             print("step %d, training loss %g" % (i + 1, train_accuracy))
 
-        optimizer.run(session=sess, feed_dict={seq_input: sequences_batch})
+        optimizer.run(session=sess, feed_dict={raw_sequence: sequences_batch, raw_labels: labels_batch})

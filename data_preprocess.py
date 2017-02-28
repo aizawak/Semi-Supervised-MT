@@ -72,7 +72,8 @@ def data_iterator(file_path, onehot_tok_idx, num_batches, batch_size, seq_length
 
             sent = content[start:end].decode('utf-8').split('\n')
 
-            onehot_seq_batch = np.empty(shape=(seq_length, batch_size, len(onehot_tok_idx)), dtype="int32")
+            onehot_seq_batch = np.empty(shape=(batch_size, seq_length, len(onehot_tok_idx)), dtype="float16")
+            labels_batch = np.empty(shape=(batch_size,seq_length), dtype="int32")
 
             for batch_idx in range(0, int(len(sent)/batch_size)):
 
@@ -80,17 +81,20 @@ def data_iterator(file_path, onehot_tok_idx, num_batches, batch_size, seq_length
 
                     sent_tok = re.findall(r"[\w]+|[^\s\w]")
 
-                    seq_idx = len(seq_length) - 1
+                    for tok_idx in range(0, len(sent_tok)):
 
-                    for tok_idx in range(len(sent_tok) - 1, -1, -1):
+                        if tok_idx >= len(seq_length):
+                            break
 
                         tok = sent_tok[tok_idx]
 
                         if tok not in onehot_tok_idx:
                             continue
                         
-                        onehot_seq_batch[seq_idx][batch_idx][onehot_tok_idx[tok]] = 1
-                    yield np.reshape(onehot_seq_batch, [-1, len(onehot_tok_idx)])
+                        onehot_seq_batch[batch_idx][seq_idx][onehot_tok_idx[tok]] = 1
+                        labels_batch[batch_idx][seq_idx] = onehot_tok_idx[tok]
+
+                    yield onehot_seq_batch,labels_batch
 
 if __name__ == "__main__":
     
