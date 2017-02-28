@@ -1,55 +1,69 @@
 import tensorflow as tf
 import numpy as np
+from data_preprocess import data_iterator
 
 # english
-# sent = np.load('data/sent_en.npy').item()
-# onehot_tok_idx = np.load('data/onehot_tok_idx_en.npy').item()
+# onehot_tok_idx = np.load('data/en_onehot')
+# en_file_path = "data/english_subtitles.gz"
+
 
 # french
-sent = np.load('data/sent_fr.npy').item()
-onehot_tok_idx = np.load('data/onehot_tok_idx_fr.npy').item()
+onehot_tok_idx = np.load('data/fr_onehot.npy')
+fr_file_path = "data/french_subtitles.gz"
 
 # Build LSTM graph
 
 vocab_size = len(onehot_tok_idx)
 num_layers = 8
-num_steps = 2000
-hidden_size = 500
+num_steps = 100
+batch_size = 50
+hidden_size = 2000
+
+seq_input = tf.placeholder(
+    tf.float16, [num_steps, batch_size, vocab_size], name="sequence_placeholder")
+
+encoder_inputs = [tf.reshape(seq_input, [-1, frame_dim])]
+
+labels = [tf.reshape(seq_input, [-1, frame_dim])]
+
+weights = [tf.ones_like(label, dtype=tf.float16) for label in labels]
+
+decoder_inputs = (
+    [tf.zeros_like(encoder_inputs[0], name="GO")] + encoder_inputs[:-1])
+
+lstm = tf.contrib.rnn.BasicLSTMCell(
+    hidden_size, forget_bias=0.0, state_is_tuple=True)
+stacked_lstm = tf.contrib.rnn.MultiRNNCell(
+    [lstm] * num_layers, state_is_tuple=True)
+
+outputs, state = tf.contrib.legacy_seq2seq.basic_rnn_seq2seq(
+    encoder_inputs=encoder_inputs, decoder_inputs=decoder_inputs, cell=stacked_lstm, dtype=tf.float16)
+
+outputs_test, state_test = tf.contrib.legacy_seq2seq.basic_rnn_seq2seq(
+    encoder_inputs, decoder_inputs, stacked_lstm, feed_previous=True)
+
+loss = tf.contrib.legacy_seq2seq.sequence_loss(
+    outputs, labels, weights, vocab_size)
+
+optimizer = tf.train.AdamOptimizer(1e-4)
+train_op = optimizer.minimize(loss)
+
+iter_ = data_iterator(fr_file_path, onehot_tok_idx,batch_size, num_steps)
+
+saver = tf.train.Saver()
+
+sess.run(tf.initialize_all_variables())
+
+with tf.Session() as sess:
+    sess.run(init)
+    for i in range(200000):
+        sequences_batch = iter_.__next__()
+
+        if (i+1)%100==0:
+            train_accuracy = loss.eval(session = sess, feed_dict={encoder_inputs: sequences_batch, labels: sequences_batch})
+            print("step %d, training loss %g"%(i+1, train_accuracy))
+
+        optimizer.run(session = sess, feed_dict={encoder_inputs: sequences_batch, labels: sequences_batch})
 
 
-# def length(sequence):
-#     used = tf.sign(tf.reduce_max(tf.abs(sequence), reduction_indices=2))
-#     length = tf.reduce_sum(used, reduction_indices=1)
-#     length = tf.cast(length, tf.int32)
-#     return length
-
-# x = tf.placeholder("float16", shape=[
-#                    None, num_steps, vocab_size], name="x_placeholder")
-# y = tf.placeholder("float16", shape=[None, num_outputs], name="y_placeholder")
-
-# weights = tf.Variable(tf.truncated_normal(
-#     [hidden_size, num_outputs], stddev=0.05, dtype=tf.float16))
-# bias = tf.Variable(tf.constant(.1, shape=[num_outputs], dtype=tf.float16))
-
-# lstm = tf.contrib.rnn.BasicLSTMCell(
-#     hidden_size, forget_bias=0.0, state_is_tuple=True)
-# stacked_lstm = tf.contrib.rnn.MultiRNNCell(
-#     [lstm] * num_layers, state_is_tuple=True)
-
-# outputs, state = tf.contrib.legacy_seq2seq.embedding_rnn_seq2seq(
-#     encoder_inputs=x, decoder_inputs=x, cell=stacked_lstm, num_encoder_symbols=vocab_size, num_decoder_symbols=vocab_size, embedding_size=1000, output_projection=None, feed_previous=False,dtype=tf.float16)
-
-# # outputs = tf.transpose(outputs, [1,0,2])
-# # last = tf.gather(outputs, num_steps - 1)
-# # y_pred = tf.nn.softmax(tf.matmul(last, weights) + bias)
-# outputs = tf.reduce_mean(outputs, 1)
-# y_pred = tf.nn.softmax(tf.matmul(outputs, weights) + bias)
-
-# cross_entropy = tf.reduce_mean(
-#     tf.nn.softmax_cross_entropy_with_logits(logits=y_pred, labels=y))
-# optimizer = tf.train.AdamOptimizer(
-#     learning_rate=learning_rate).minimize(cross_entropy)
-
-# correct_pred = tf.equal(tf.argmax(y_pred, 1), tf.argmax(y, 1))
-# accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 

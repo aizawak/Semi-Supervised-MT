@@ -92,29 +92,31 @@ def data_iterator(file_path, onehot_tok_idx, num_batches, batch_size, seq_length
                         onehot_seq_batch[seq_idx][batch_idx][onehot_tok_idx[tok]] = 1
                     yield onehot_seq_batch
 
-en_file_path = "data/english_subtitles.gz"
-fr_file_path = "data/french_subtitles.gz"
-
-en_write_path = "data/en_onehot.npy"
-fr_write_path = "data/fr_onehot.npy"
-
-num_batches = 5
-
-print("processing english subtitles")
-
-if not os.path.isfile(en_file_path):
-    urllib.request.urlretrieve("http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.en.gz", filename=en_file_path)
-
-print("...subtitles downloaded")
-
-read_data(en_file_path, en_write_path, num_batches)
-
-
-print("processing french subtitles")
-
-if not os.path.isfile(fr_file_path):
-    urllib.request.urlretrieve("http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.fr.gz", filename=fr_file_path)
+if __name__ == "__main__":
     
-print("...subtitles downloaded")
+    en_file_path = "data/english_subtitles.gz"
+    fr_file_path = "data/french_subtitles.gz"
 
-read_data(fr_file_path, fr_write_path, num_batches)
+    en_write_path = "data/en_onehot.npy"
+    fr_write_path = "data/fr_onehot.npy"
+
+    num_batches = 5
+
+    print("processing english subtitles")
+
+    if not os.path.isfile(en_file_path):
+        urllib.request.urlretrieve("http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.en.gz", filename=en_file_path)
+
+    print("...subtitles downloaded")
+
+    read_data(en_file_path, en_write_path, num_batches)
+
+
+    print("processing french subtitles")
+
+    if not os.path.isfile(fr_file_path):
+        urllib.request.urlretrieve("http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.fr.gz", filename=fr_file_path)
+        
+    print("...subtitles downloaded")
+
+    read_data(fr_file_path, fr_write_path, num_batches)
