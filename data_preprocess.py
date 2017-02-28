@@ -72,7 +72,7 @@ def data_iterator(file_path, onehot_tok_idx, num_batches, batch_size, seq_length
 
             sent = content[start:end].decode('utf-8').split('\n')
 
-            onehot_seq_batch = np.empty(shape=(seq_length, batch_size, len(onehot_tok_idx)), dtype="float16")
+            onehot_seq_batch = np.empty(shape=(seq_length, batch_size, len(onehot_tok_idx)), dtype="int32")
 
             for batch_idx in range(0, int(len(sent)/batch_size)):
 

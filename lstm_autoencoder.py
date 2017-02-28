@@ -8,7 +8,7 @@ from data_preprocess import data_iterator
 
 
 # french
-onehot_tok_idx = np.load('data/fr_onehot.npy')
+onehot_tok_idx = np.load('data/fr_onehot.npy').item()
 fr_file_path = "data/french_subtitles.gz"
 
 # Build LSTM graph
@@ -20,11 +20,11 @@ batch_size = 50
 hidden_size = 2000
 
 seq_input = tf.placeholder(
-    tf.float16, [num_steps, batch_size, vocab_size], name="sequence_placeholder")
+    tf.int32, [num_steps, batch_size, vocab_size], name="sequence_placeholder")
 
-encoder_inputs = [tf.reshape(seq_input, [-1, frame_dim])]
+encoder_inputs = [tf.reshape(seq_input, [-1, vocab_size])]
 
-labels = [tf.reshape(seq_input, [-1, frame_dim])]
+labels = [tf.reshape(seq_input, [-1, vocab_size])]
 
 weights = [tf.ones_like(label, dtype=tf.float16) for label in labels]
 
@@ -32,15 +32,15 @@ decoder_inputs = (
     [tf.zeros_like(encoder_inputs[0], name="GO")] + encoder_inputs[:-1])
 
 lstm = tf.contrib.rnn.BasicLSTMCell(
-    hidden_size, forget_bias=0.0, state_is_tuple=True)
+    hidden_size, forget_bias=0, state_is_tuple=True)
 stacked_lstm = tf.contrib.rnn.MultiRNNCell(
     [lstm] * num_layers, state_is_tuple=True)
 
 outputs, state = tf.contrib.legacy_seq2seq.basic_rnn_seq2seq(
     encoder_inputs=encoder_inputs, decoder_inputs=decoder_inputs, cell=stacked_lstm, dtype=tf.float16)
 
-outputs_test, state_test = tf.contrib.legacy_seq2seq.basic_rnn_seq2seq(
-    encoder_inputs, decoder_inputs, stacked_lstm, feed_previous=True)
+# outputs_test, state_test = tf.contrib.legacy_seq2seq.basic_rnn_seq2seq(
+#    encoder_inputs, decoder_inputs, stacked_lstm, feed_previous=True)
 
 loss = tf.contrib.legacy_seq2seq.sequence_loss(
     outputs, labels, weights, vocab_size)
@@ -63,7 +63,7 @@ with tf.Session() as sess:
             train_accuracy = loss.eval(session = sess, feed_dict={encoder_inputs: sequences_batch, labels: sequences_batch})
             print("step %d, training loss %g"%(i+1, train_accuracy))
 
-        optimizer.run(session = sess, feed_dict={encoder_inputs: sequences_batch, labels: sequences_batch})
+        optimizer.run(session = sess, feed_dict={seq_input: sequences_batch})
 
 
 
