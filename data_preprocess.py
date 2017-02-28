@@ -40,7 +40,6 @@ def read_data(file_path, write_path, num_batches):
         end = math.floor((i + 1) * len(content) / num_batches)
 
         sent = content[start:end].decode('utf-8').split('\n')
-        del content
         
         print("...subtitles in memory for batch %d/%d"%(i+1, num_batches))
 
@@ -108,7 +107,7 @@ if not os.path.isfile(en_file_path):
 
 print("...subtitles downloaded")
 
-generate_data(en_file_path, en_write_path, num_batches)
+read_data(en_file_path, en_write_path, num_batches)
 
 
 print("processing french subtitles")
@@ -118,4 +117,4 @@ if not os.path.isfile(fr_file_path):
     
 print("...subtitles downloaded")
 
-generate_data(fr_file_path, fr_write_path, num_batches)
+read_data(fr_file_path, fr_write_path, num_batches)
