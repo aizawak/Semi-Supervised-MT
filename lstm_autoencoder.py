@@ -81,7 +81,7 @@ iter_ = data_iterator(fr_file_path, onehot_tok_idx, 1, batch_size, num_steps)
 
 print("iterator loaded")
 
-# saver = tf.train.Saver()
+saver = tf.train.Saver()
 
 init = tf.global_variables_initializer()
 
@@ -91,6 +91,10 @@ with tf.Session() as sess:
     sess.run(init)
     for i in range(200000):
         sequences_batch, labels_batch = iter_.__next__()
+
+        if (i + 1) % 10000 == 0:
+            save_path = saver.save(sess, "tmp/model_%d.ckpt"%(i+1))
+            print("Model saved in file: %s"%save_path)
 
         if (i + 1) % 100 == 0:
             train_accuracy = loss.eval(session=sess, feed_dict={
