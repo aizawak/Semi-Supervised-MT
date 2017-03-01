@@ -20,9 +20,9 @@ def length(sequence):
 
 vocab_size = len(onehot_tok_idx)
 num_layers = 4
-num_steps = 50
+num_steps = 15
 batch_size = 20
-hidden_size = 1000
+hidden_size = 100
 
 # tensor of shape [ batch_size x num_steps x vocab_size ] with post-padding
 encoder_inputs = tf.placeholder(tf.float16, shape=(
@@ -43,18 +43,18 @@ decoder_inputs = (
 decoder_weights = tf.Variable(tf.truncated_normal(
     [hidden_size, vocab_size], stddev=0.05, dtype=tf.float16))
 decoder_bias = tf.Variable(
-    tf.constant(.1, shape=[vocab_size], dtype=tf.float16))
+    tf.constant(1, shape=[vocab_size], dtype=tf.float16))
 
 # list of 1D tensors [ batch_size ] of length num_steps
 raw_labels = tf.placeholder(tf.int32, shape=(
     batch_size, num_steps), name="placeholder_raw_labels")
-labels = tf.unstack(raw_labels, axis=1)
+targets = tf.unstack(raw_labels, axis=1)
 
 # list of 1D tensors [ batch_size ] of length num_steps
 loss_weights = tf.unstack(tf.cast(mask, tf.float16), axis=1)
 
 lstm = tf.contrib.rnn.BasicLSTMCell(
-    hidden_size, forget_bias=0.0, state_is_tuple=True)
+    hidden_size, forget_bias=1, state_is_tuple=True)
 stacked_lstm = tf.contrib.rnn.MultiRNNCell(
     [lstm] * num_layers, state_is_tuple=True)
 
@@ -70,11 +70,11 @@ preds = [tf.matmul(step, decoder_weights) +
          decoder_bias for step in decoder_outputs]
 
 loss = tf.contrib.legacy_seq2seq.sequence_loss(
-    logits=preds, targets=labels, weights=loss_weights)
+    logits=preds, targets=targets, weights=loss_weights)
 
-optimizer = tf.train.AdamOptimizer(1e-6)
+optimizer = tf.train.AdamOptimizer(1e-8)
 gradients = optimizer.compute_gradients(loss)
-clipped_gradients = [(tf.clip_by_norm(grad, 2), var) for grad, var in gradients]
+clipped_gradients = [(tf.clip_by_norm(grad, 3), var) for grad, var in gradients]
 train_op = optimizer.apply_gradients(clipped_gradients)
 
 print("graph loaded")
@@ -91,14 +91,14 @@ print("variables initialized")
 
 with tf.Session() as sess:
     sess.run(init)
-    for i in range(200000):
+    for i in range(10000000):
         sequences_batch, labels_batch = iter_.__next__()
-
+        
         if (i + 1) % 10000 == 0:
             save_path = saver.save(sess, "tmp/model_%d.ckpt"%(i+1))
             print("Model saved in file: %s"%save_path)
 
-        if (i + 1) % 100 == 0:
+        if (i + 1) % 1 == 0:
             train_accuracy = loss.eval(session=sess, feed_dict={
                                        encoder_inputs: sequences_batch, raw_labels: labels_batch})
             print("step %d, training loss %g" % (i + 1, train_accuracy))

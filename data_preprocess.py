@@ -106,9 +106,9 @@ def data_iterator(file_path, onehot_tok_idx, num_batches, batch_size, seq_length
 
             sent = content[start:end].decode('utf-8').split('\n')
 
-            onehot_seq_batch = np.empty(
+            onehot_seq_batch = np.zeros(
                 shape=(batch_size, seq_length, len(onehot_tok_idx)), dtype="float16")
-            labels_batch = np.empty(
+            labels_batch = np.zeros(
                 shape=(batch_size, seq_length), dtype="int32")
 
             for batch_idx in range(0, batch_size):
@@ -132,7 +132,6 @@ def data_iterator(file_path, onehot_tok_idx, num_batches, batch_size, seq_length
                         onehot_seq_batch[batch_idx][
                             tok_idx][onehot_tok_idx[tok]] = 1
                         labels_batch[batch_idx][tok_idx] = onehot_tok_idx[tok]
-
                     yield onehot_seq_batch, labels_batch
 
 if __name__ == "__main__":
