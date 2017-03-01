@@ -22,7 +22,7 @@ vocab_size = len(onehot_tok_idx)
 num_layers = 4
 num_steps = 15
 batch_size = 20
-hidden_size = 100
+hidden_size = 200
 
 # tensor of shape [ batch_size x num_steps x vocab_size ] with post-padding
 encoder_inputs = tf.placeholder(tf.float32, shape=(
@@ -72,7 +72,7 @@ preds = [tf.matmul(step, decoder_weights) +
 loss = tf.contrib.legacy_seq2seq.sequence_loss(
     logits=preds, targets=targets, weights=loss_weights)
 
-optimizer = tf.train.AdamOptimizer(1e-8)
+optimizer = tf.train.AdamOptimizer(1e-3)
 gradients = optimizer.compute_gradients(loss)
 clipped_gradients = [(tf.clip_by_norm(grad, 3), var) for grad, var in gradients]
 train_op = optimizer.apply_gradients(clipped_gradients)
@@ -91,14 +91,14 @@ print("variables initialized")
 
 with tf.Session() as sess:
     sess.run(init)
-    for i in range(10000000):
+    for i in range(16850000):
         sequences_batch, labels_batch = iter_.__next__()
         
         if (i + 1) % 10000 == 0:
             save_path = saver.save(sess, "tmp/model_%d.ckpt"%(i+1))
             print("Model saved in file: %s"%save_path)
 
-        if (i + 1) % 1 == 0:
+        if (i + 1) % 100 == 0:
             train_accuracy = loss.eval(session=sess, feed_dict={
                                        encoder_inputs: sequences_batch, raw_labels: labels_batch})
             print("step %d, training loss %g" % (i + 1, train_accuracy))
