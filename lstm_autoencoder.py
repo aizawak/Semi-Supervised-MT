@@ -22,9 +22,9 @@ def length(sequence):
 
 vocab_size = len(onehot_tok_idx)
 num_layers = 4
-num_steps = 20
-batch_size = 1
-hidden_size = 500
+num_steps = 40
+batch_size = 10
+hidden_size = 1000
 
 # batch_size x num_steps x vocab_size with post-padding
 raw_sequence = tf.placeholder(tf.float16, shape=(
@@ -102,4 +102,4 @@ with tf.Session() as sess:
                                        raw_sequence: sequences_batch, raw_labels: labels_batch})
             print("step %d, training loss %g" % (i + 1, train_accuracy))
 
-        optimizer.run(session=sess, feed_dict={raw_sequence: sequences_batch, raw_labels: labels_batch})
+        train_op.run(session=sess, feed_dict={raw_sequence: sequences_batch, raw_labels: labels_batch})

@@ -34,7 +34,7 @@ def read_data(file_path, write_path, num_batches, min_count):
 
     for i in range(0, num_batches):
         start = math.floor(i * len(content) / num_batches)
-        end = math.floor(i + 1) * len(content) / num_batches)
+        end = math.floor((i + 1) * len(content) / num_batches)
     
         toks = re.findall(r"[\w]+|[^\s\w]", content[start:end].decode('utf-8'))
 
@@ -90,15 +90,17 @@ def data_iterator(file_path, onehot_tok_idx, num_batches, batch_size, seq_length
             onehot_seq_batch = np.empty(shape=(batch_size, seq_length, len(onehot_tok_idx)), dtype="float16")
             labels_batch = np.empty(shape=(batch_size,seq_length), dtype="int32")
 
-            for batch_idx in range(0, int(len(sent)/batch_size)):
+            for batch_idx in range(0, batch_size):
 
                 for sent_idx in range(batch_idx*batch_size, (batch_idx+1)*batch_size):
+                    if sent_idx >= len(sent):
+                        break
 
-                    sent_tok = re.findall(r"[\w]+|[^\s\w]")
+                    sent_tok = re.findall(r"[\w]+|[^\s\w]", sent[sent_idx])
 
                     for tok_idx in range(0, len(sent_tok)):
 
-                        if tok_idx >= len(seq_length):
+                        if tok_idx >= seq_length:
                             break
 
                         tok = sent_tok[tok_idx]
@@ -106,8 +108,8 @@ def data_iterator(file_path, onehot_tok_idx, num_batches, batch_size, seq_length
                         if tok not in onehot_tok_idx:
                             tok = "UNKNOWNTEXT"
                         
-                        onehot_seq_batch[batch_idx][seq_idx][onehot_tok_idx[tok]] = 1
-                        labels_batch[batch_idx][seq_idx] = onehot_tok_idx[tok]
+                        onehot_seq_batch[batch_idx][tok_idx][onehot_tok_idx[tok]] = 1
+                        labels_batch[batch_idx][tok_idx] = onehot_tok_idx[tok]
 
                     yield onehot_seq_batch,labels_batch
 
@@ -120,16 +122,16 @@ if __name__ == "__main__":
     fr_write_path = "data/fr_onehot.npy"
 
     num_batches = 5
-    min_count = 10
+    min_count = 200
 
-    print("processing english subtitles")
+#    print("processing english subtitles")
 
-    if not os.path.isfile(en_file_path):
-        urllib.request.urlretrieve("http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.en.gz", filename=en_file_path)
+#    if not os.path.isfile(en_file_path):
+#        urllib.request.urlretrieve("http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.en.gz", filename=en_file_path)
 
-    print("...subtitles downloaded")
+#    print("...subtitles downloaded")
 
-    read_data(en_file_path, en_write_path, num_batches, min_count)
+#    read_data(en_file_path, en_write_path, num_batches, min_count)
 
 
     print("processing french subtitles")
@@ -139,4 +141,4 @@ if __name__ == "__main__":
         
     print("...subtitles downloaded")
 
-    read_data(fr_file_path, fr_write_path, num_batches)
+    read_data(fr_file_path, fr_write_path, num_batches, min_count)
