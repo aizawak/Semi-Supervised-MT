@@ -25,7 +25,7 @@ batch_size = 20
 hidden_size = 100
 
 # tensor of shape [ batch_size x num_steps x vocab_size ] with post-padding
-encoder_inputs = tf.placeholder(tf.float16, shape=(
+encoder_inputs = tf.placeholder(tf.float32, shape=(
     batch_size, num_steps, vocab_size), name="placeholder_encoder_inputs")
 
 # tensor of shape [ batch_size x num_steps ]
@@ -41,9 +41,9 @@ decoder_inputs = (
     [tf.zeros_like(decoder_inputs[0], name="GO")] + decoder_inputs[:-1])
 
 decoder_weights = tf.Variable(tf.truncated_normal(
-    [hidden_size, vocab_size], stddev=0.05, dtype=tf.float16))
+    [hidden_size, vocab_size], stddev=0.05, dtype=tf.float32))
 decoder_bias = tf.Variable(
-    tf.constant(1, shape=[vocab_size], dtype=tf.float16))
+    tf.constant(1, shape=[vocab_size], dtype=tf.float32))
 
 # list of 1D tensors [ batch_size ] of length num_steps
 raw_labels = tf.placeholder(tf.int32, shape=(
@@ -51,17 +51,17 @@ raw_labels = tf.placeholder(tf.int32, shape=(
 targets = tf.unstack(raw_labels, axis=1)
 
 # list of 1D tensors [ batch_size ] of length num_steps
-loss_weights = tf.unstack(tf.cast(mask, tf.float16), axis=1)
+loss_weights = tf.unstack(tf.cast(mask, tf.float32), axis=1)
 
 lstm = tf.contrib.rnn.BasicLSTMCell(
     hidden_size, forget_bias=1, state_is_tuple=True)
 stacked_lstm = tf.contrib.rnn.MultiRNNCell(
     [lstm] * num_layers, state_is_tuple=True)
 
-initial_state = stacked_lstm.zero_state(batch_size, dtype=tf.float16)
+initial_state = stacked_lstm.zero_state(batch_size, dtype=tf.float32)
 
 encoder_outputs, encoder_state = tf.nn.dynamic_rnn(
-    cell=stacked_lstm, inputs=encoder_inputs, initial_state=initial_state, dtype=tf.float16, sequence_length=encoder_lengths)
+    cell=stacked_lstm, inputs=encoder_inputs, initial_state=initial_state, dtype=tf.float32, sequence_length=encoder_lengths)
 
 decoder_outputs, decoder_state = tf.contrib.legacy_seq2seq.rnn_decoder(
     decoder_inputs=decoder_inputs, initial_state=encoder_state, cell=stacked_lstm)
