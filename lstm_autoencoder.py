@@ -46,9 +46,9 @@ decoder_bias = tf.Variable(
     tf.constant(.1, shape=[vocab_size], dtype=tf.float16))
 
 # list of 1D tensors [ batch_size ] of length num_steps
-labels = tf.placeholder(tf.int32, shape=(
+raw_labels = tf.placeholder(tf.int32, shape=(
     batch_size, num_steps), name="placeholder_raw_labels")
-labels = tf.unstack(labels, axis=1)
+labels = tf.unstack(raw_labels, axis=1)
 
 # list of 1D tensors [ batch_size ] of length num_steps
 loss_weights = tf.unstack(tf.cast(mask, tf.float16), axis=1)
@@ -98,8 +98,8 @@ with tf.Session() as sess:
 
         if (i + 1) % 100 == 0:
             train_accuracy = loss.eval(session=sess, feed_dict={
-                                       encoder_inputs: sequences_batch, labels: labels_batch})
+                                       encoder_inputs: sequences_batch, raw_labels: labels_batch})
             print("step %d, training loss %g" % (i + 1, train_accuracy))
 
         train_op.run(session=sess, feed_dict={
-                     encoder_inputs: sequences_batch, labels: labels_batch})
+                     encoder_inputs: sequences_batch, raw_labels: labels_batch})
