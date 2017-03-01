@@ -20,9 +20,9 @@ def length(sequence):
 
 vocab_size = len(onehot_tok_idx)
 num_layers = 4
-num_steps = 20
+num_steps = 50
 batch_size = 20
-hidden_size = 200
+hidden_size = 1000
 
 # tensor of shape [ batch_size x num_steps x vocab_size ] with post-padding
 encoder_inputs = tf.placeholder(tf.float16, shape=(
@@ -72,8 +72,10 @@ preds = [tf.matmul(step, decoder_weights) +
 loss = tf.contrib.legacy_seq2seq.sequence_loss(
     logits=preds, targets=labels, weights=loss_weights)
 
-optimizer = tf.train.AdamOptimizer(1e-5)
-train_op = optimizer.minimize(loss)
+optimizer = tf.train.AdamOptimizer(1e-6)
+gradients = optimizer.compute_gradients(loss)
+clipped_gradients = [(tf.clip_by_norm(grad, 2), var) for grad, var in gradients]
+train_op = optimizer.apply_gradients(clipped_gradients)
 
 print("graph loaded")
 
