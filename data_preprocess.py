@@ -34,7 +34,7 @@ import math
 # min_count = min number of tokens
 
 
-def read_data(file_path, write_path, num_batches, min_count):
+def read_data(file_path, write_path, num_batches, top_n):
 
     with gzip.open(file_path, 'rb') as f:
         content = f.read()
@@ -50,7 +50,11 @@ def read_data(file_path, write_path, num_batches, min_count):
         for tok in toks:
             tok_counts[tok] += 1
 
+        del toks
+
     print("...tokens counted")
+
+    tok_counts = tok_counts.most_common(top_n)
 
     onehot_tok_idx = {}
 
@@ -70,7 +74,7 @@ def read_data(file_path, write_path, num_batches, min_count):
             sent_tok = re.findall(r"[\w]+|[^\s\w]", sent[sent_idx])
 
             for tok in sent_tok:
-                if tok_counts[tok] < min_count:
+                if tok not in tok_counts:
                     tok = "UNKNOWNTEXT"
                 if tok not in onehot_tok_idx:
                     onehot_tok_idx[tok] = tok_idx
@@ -134,6 +138,8 @@ def data_iterator(file_path, onehot_tok_idx, num_batches, batch_size, seq_length
                         labels_batch[batch_idx][tok_idx] = onehot_tok_idx[tok]
                     yield onehot_seq_batch, labels_batch
 
+            del sent
+
 if __name__ == "__main__":
 
     en_file_path = "data/english_subtitles.gz"
@@ -142,17 +148,16 @@ if __name__ == "__main__":
     en_write_path = "data/en_onehot.npy"
     fr_write_path = "data/fr_onehot.npy"
 
-    num_batches = 5
-    min_count = 200
+    top_n = 80000
 
-#    print("processing english subtitles")
+   print("processing english subtitles")
 
-#    if not os.path.isfile(en_file_path):
-#        urllib.request.urlretrieve("http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.en.gz", filename=en_file_path)
+   if not os.path.isfile(en_file_path):
+       urllib.request.urlretrieve("http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.en.gz", filename=en_file_path)
 
-#    print("...subtitles downloaded")
+   print("...subtitles downloaded")
 
-#    read_data(en_file_path, en_write_path, num_batches, min_count)
+	read_data(file_path = en_file_path, write_path = en_write_path, num_batches = 5, top_n = top_n)
 
     print("processing french subtitles")
 
@@ -162,4 +167,4 @@ if __name__ == "__main__":
 
     print("...subtitles downloaded")
 
-    read_data(fr_file_path, fr_write_path, num_batches, min_count)
+    read_data(file_path = fr_file_path, write_path = fr_write_path, num_batches = 5, top_n = top_n)
