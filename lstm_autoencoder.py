@@ -18,6 +18,8 @@ fr_val_subset_file_path = "data/fr_val_subset.gz"
 en_onehot_tok_idx = "data/en_onehot.npy"
 fr_onehot_tok_idx = "data/fr_onehot.npy"
 
+onehot_tok_idx = np.load("en_onehot_tok_idx").item()
+
 # Build LSTM graph
 def length(sequence):
     used = tf.sign(tf.reduce_max(tf.abs(sequence), reduction_indices=2))
