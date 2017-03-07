@@ -59,13 +59,15 @@ def read_data(file_paths, write_path, num_batches, top_n):
 
         print("...tokens counted for file: %s" % file_path)
 
+    del content
+
     tok_counts = tok_counts.most_common(top_n)
 
     onehot_tok_idx = {"UNK": 0}
 
     tok_idx = 1
 
-    for tok in tok_counts.keys():
+    for tok, count in tok_counts:
 
         if tok not in onehot_tok_idx:
             onehot_tok_idx[tok] = tok_idx
@@ -73,6 +75,7 @@ def read_data(file_paths, write_path, num_batches, top_n):
 
     np.save(write_path, onehot_tok_idx)
     print("...token id's saved")
+
 
 def generate_val(file_path, write_path, num_val):
 
@@ -87,7 +90,7 @@ def generate_val(file_path, write_path, num_val):
 
     with gzip.open(write_path, 'wb') as wf:
         wf.write(raw)
-    
+
     print("...validation set saved")
 
 # Loop through batches and generate one-hot encodings of sequences and
@@ -180,13 +183,13 @@ if __name__ == "__main__":
         file_source = en_file_sources[i]
         file_path = en_file_paths[i]
 
-        if not os.path.isfile(file_source):
+        if not os.path.isfile(file_path):
             urllib.request.urlretrieve(
                 file_source, filename=file_path)
 
     if not os.path.isfile(en_val_file_path):
         urllib.request.urlretrieve(
-            en_val_file_source, filename=en_val_file_path)    
+            en_val_file_source, filename=en_val_file_path)
 
     print("...files downloaded")
 
@@ -202,16 +205,17 @@ if __name__ == "__main__":
         file_source = fr_file_sources[i]
         file_path = fr_file_paths[i]
 
-        if not os.path.isfile(file_source):
+        if not os.path.isfile(file_path):
             urllib.request.urlretrieve(
                 file_source, filename=file_path)
 
     if not os.path.isfile(fr_val_file_path):
         urllib.request.urlretrieve(
-            fr_val_file_source, filename=fr_val_file_path)    
+            fr_val_file_source, filename=fr_val_file_path)
 
     print("...files downloaded")
 
-    read_data(file_paths = fr_file_paths, write_path = fr_write_path, num_batches = 1, top_n = top_n)
+    read_data(file_paths=fr_file_paths, write_path=fr_write_path,
+              num_batches=1, top_n=top_n)
 
     generate_val(fr_val_file_path, fr_val_write_path, 3000)
