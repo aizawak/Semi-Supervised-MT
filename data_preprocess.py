@@ -150,14 +150,14 @@ if __name__ == "__main__":
 
     top_n = 80000
 
-   print("processing english subtitles")
+    print("processing english subtitles")
 
-   if not os.path.isfile(en_file_path):
-       urllib.request.urlretrieve("http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.en.gz", filename=en_file_path)
+    if not os.path.isfile(en_file_path):
+        urllib.request.urlretrieve("http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.en.gz", filename=en_file_path)
 
-   print("...subtitles downloaded")
+    print("...subtitles downloaded")
 
-	read_data(file_path = en_file_path, write_path = en_write_path, num_batches = 5, top_n = top_n)
+    read_data(file_path = en_file_path, write_path = en_write_path, num_batches = 5, top_n = top_n)
 
     print("processing french subtitles")
 
@@ -167,4 +167,4 @@ if __name__ == "__main__":
 
     print("...subtitles downloaded")
 
-    read_data(file_path = fr_file_path, write_path = fr_write_path, num_batches = 5, top_n = top_n)
+#    read_data(file_path = fr_file_path, write_path = fr_write_path, num_batches = 5, top_n = top_n)
