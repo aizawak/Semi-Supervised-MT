@@ -61,7 +61,7 @@ def read_data(file_paths, write_path, num_batches, top_n):
 
     del content
 
-    tok_counts = tok_counts.most_common(top_n)
+    tok_counts = tok_counts.most_common(top_n - 1)
 
     onehot_tok_idx = {"UNK": 0}
 

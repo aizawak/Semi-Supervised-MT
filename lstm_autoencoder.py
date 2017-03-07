@@ -29,8 +29,8 @@ def length(sequence):
 
 vocab_size = len(onehot_tok_idx)
 num_layers = 4
-num_steps = 100
-batch_size = 30
+num_steps = 40
+batch_size = 60
 hidden_size = 200
 
 # tensor of shape [ batch_size x num_steps x vocab_size ] with post-padding
@@ -88,9 +88,9 @@ train_op = optimizer.apply_gradients(clipped_gradients)
 
 print("graph loaded")
 
-iter_ = data_iterator([en_file_paths[6]], en_onehot_tok_idx, 1, batch_size, num_steps)
+iter_ = data_iterator([en_file_paths[6]], onehot_tok_idx, 1, batch_size, num_steps)
 
-val_iter_ = data_iterator([en_val_subset_file_path], en_onehot_tok_idx, 1, batch_size, num_steps)
+val_iter_ = data_iterator([en_val_subset_file_path], onehot_tok_idx, 1, batch_size, num_steps)
 
 print("iterator loaded")
 
