@@ -165,11 +165,11 @@ if __name__ == "__main__":
     en_val_file_source = "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2007.en.shuffled.gz"
     fr_val_file_source = "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2007.fr.shuffled.gz"
 
-    en_val_file_path = "en_val.gz"
-    fr_val_file_path = "fr_val.gz"
+    en_val_file_path = "data/en_val.gz"
+    fr_val_file_path = "data/fr_val.gz"
 
-    en_val_write_path = "en_val.gz"
-    fr_val_write_path = "fr_val.gz"
+    en_val_write_path = "data/en_val_subset.gz"
+    fr_val_write_path = "data/fr_val_subset.gz"
 
     en_write_path = "data/en_onehot.npy"
     fr_write_path = "data/fr_onehot.npy"
