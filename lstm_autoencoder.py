@@ -12,7 +12,8 @@ en_file_paths = ["data/en_%d.gz" %
 fr_file_paths = ["data/fr_%d.gz" %
                  i for i in range(0, len(fr_file_sources))]
 
-en_val_file_path = "data/en_val.gz"
+en_val_subset_file_path = "data/en_val_subset.gz"
+fr_val_subset_file_path = "data/fr_val_subset.gz"
 
 en_onehot_tok_idx = "data/en_onehot.npy"
 fr_onehot_tok_idx = "data/fr_onehot.npy"
