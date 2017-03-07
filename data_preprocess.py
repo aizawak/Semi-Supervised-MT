@@ -58,6 +58,8 @@ def read_data(file_paths, write_path, num_batches, top_n):
             del toks
 
         print("...tokens counted for file: %s" % file_path)
+    
+    del content
 
     tok_counts = tok_counts.most_common(top_n)
 
