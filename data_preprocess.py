@@ -193,7 +193,7 @@ if __name__ == "__main__":
 
     print("...files downloaded")
 
-    read_data(file_paths=en_file_paths, write_path=en_write_path,
+    read_data(file_paths=[en_file_paths[6]], write_path=en_write_path,
               num_batches=1, top_n=top_n)
 
     generate_val(en_val_file_path, en_val_write_path, 3000)
@@ -215,7 +215,7 @@ if __name__ == "__main__":
 
     print("...files downloaded")
 
-    read_data(file_paths=fr_file_paths, write_path=fr_write_path,
+    read_data(file_paths=[fr_file_paths[6]], write_path=fr_write_path,
               num_batches=1, top_n=top_n)
 
     generate_val(fr_val_file_path, fr_val_write_path, 3000)

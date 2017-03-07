@@ -86,7 +86,7 @@ train_op = optimizer.apply_gradients(clipped_gradients)
 
 print("graph loaded")
 
-iter_ = data_iterator(en_file_paths, en_onehot_tok_idx, 1, batch_size, num_steps)
+iter_ = data_iterator([en_file_paths[6]], en_onehot_tok_idx, 1, batch_size, num_steps)
 
 val_iter_ = data_iterator([en_val_file_path], en_onehot_tok_idx, 1, batch_size, num_steps)
 
