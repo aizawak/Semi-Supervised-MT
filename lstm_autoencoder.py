@@ -28,7 +28,7 @@ def length(sequence):
 vocab_size = len(onehot_tok_idx)
 num_layers = 4
 num_steps = 100
-batch_size = 20
+batch_size = 30
 hidden_size = 200
 
 # tensor of shape [ batch_size x num_steps x vocab_size ] with post-padding
@@ -98,11 +98,15 @@ init = tf.global_variables_initializer()
 
 print("variables initialized")
 
-epoch_iterations = 10000
+total_samples = 28127449
 
-total_iterations = 16850000
+epoch_iterations = int(total_samples / batch_size)
 
-val_iterations = 20
+total_iterations = epoch_iterations * 10
+
+total_val_samples = 3000
+
+val_iterations = total_val_samples / batch_size
 
 with tf.Session() as sess:
     sess.run(init)
