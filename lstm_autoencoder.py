@@ -30,8 +30,8 @@ def length(sequence):
 vocab_size = len(onehot_tok_idx)
 num_layers = 4
 num_steps = 40
-batch_size = 60
-hidden_size = 200
+batch_size = 100
+hidden_size = 500
 
 # tensor of shape [ batch_size x num_steps x vocab_size ] with post-padding
 encoder_inputs = tf.placeholder(tf.float32, shape=(
@@ -94,7 +94,7 @@ val_iter_ = data_iterator([en_val_subset_file_path], onehot_tok_idx, 1, batch_si
 
 print("iterator loaded")
 
-saver = tf.train.Saver()
+saver = tf.train.Saver(max_to_keep=50)
 
 init = tf.global_variables_initializer()
 
@@ -115,23 +115,23 @@ with tf.Session() as sess:
     for i in range(total_iterations):
         sequences_batch, labels_batch = iter_.__next__()
         
-        if (i + 1) % epoch_iterations == 0:
-
-            save_path = saver.save(sess, "tmp/model_%d.ckpt"%(i+1))
-            print("Model saved in file: %s"%save_path)
+        if (i + 1) % (epoch_iterations / 5) == 0:
 
             validation_accuracy = 0
 
             for i in range(0, val_iterations):
 
-                val_sequences_batch, val_labels_batch = iter_.__next__()
+                val_sequences_batch, val_labels_batch = val_iter_.__next__()
 
                 validation_accuracy += loss.eval(session=sess, feed_dict={
                                            encoder_inputs: val_sequences_batch, raw_labels: val_labels_batch})
 
-            
-            print("step %d, validation loss %g" % (i + 1, validation_accuracy / val_iterations))
+            validation_accuracy = validation_accuracy / val_iterations
 
+            print("step %d, validation loss %g" % (i + 1, validation_accuracy))
+
+            save_path = saver.save(sess, "tmp/model_%d_%g.ckpt"%(i + 1, validation_accuracy))
+            print("Model saved in file: %s"%save_path)
 
         if (i + 1) % 100 == 0:
             train_accuracy = loss.eval(session=sess, feed_dict={

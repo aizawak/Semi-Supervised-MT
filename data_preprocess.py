@@ -174,7 +174,7 @@ if __name__ == "__main__":
     en_write_path = "data/en_onehot.npy"
     fr_write_path = "data/fr_onehot.npy"
 
-    top_n = 40000
+    top_n = 20000
 
     print("processing english files")
 
