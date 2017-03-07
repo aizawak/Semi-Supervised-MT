@@ -67,7 +67,7 @@ def read_data(file_paths, write_path, num_batches, top_n):
 
     tok_idx = 1
 
-    for tok in tok_counts.keys():
+    for tok,count in tok_counts:
 
         if tok not in onehot_tok_idx:
             onehot_tok_idx[tok] = tok_idx
@@ -157,7 +157,7 @@ if __name__ == "__main__":
         file_source = en_file_sources[i]
         file_path = en_file_paths[i]
 
-        if not os.path.isfile(file_source):
+        if not os.path.isfile(file_path):
             urllib.request.urlretrieve(
                 file_source, filename=file_path)
 
@@ -173,7 +173,7 @@ if __name__ == "__main__":
         file_source = fr_file_sources[i]
         file_path = fr_file_paths[i]
 
-        if not os.path.isfile(file_source):
+        if not os.path.isfile(file_path):
             urllib.request.urlretrieve(
                 file_source, filename=file_path)
     print("...files downloaded")
