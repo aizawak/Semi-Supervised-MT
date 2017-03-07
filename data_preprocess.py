@@ -176,4 +176,4 @@ if __name__ == "__main__":
                 file_source, filename=file_path)
     print("...files downloaded")
 
-   read_data(file_paths = fr_file_paths, write_path = fr_write_path, num_batches = 1, top_n = top_n)
+    read_data(file_paths = fr_file_paths, write_path = fr_write_path, num_batches = 1, top_n = top_n)
