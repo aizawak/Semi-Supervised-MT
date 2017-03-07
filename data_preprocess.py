@@ -34,55 +34,42 @@ import math
 # min_count = min number of tokens
 
 
-def read_data(file_path, write_path, num_batches, top_n):
-
-    with gzip.open(file_path, 'rb') as f:
-        content = f.read()
+def read_data(file_paths, write_path, num_batches, top_n):
 
     tok_counts = collections.Counter()
 
-    for i in range(0, num_batches):
-        start = math.floor(i * len(content) / num_batches)
-        end = math.floor((i + 1) * len(content) / num_batches)
+    for file_path in file_paths:
 
-        toks = re.findall(r"[\w]+|[^\s\w]", content[start:end].decode('utf-8'))
+        print("...processing file: %s" % file_path)
 
-        for tok in toks:
-            tok_counts[tok] += 1
+        with gzip.open(file_path, 'rb') as f:
+            content = f.read()
 
-        del toks
+        for i in range(0, num_batches):
+            start = math.floor(i * len(content) / num_batches)
+            end = math.floor((i + 1) * len(content) / num_batches)
 
-    print("...tokens counted")
+            toks = re.findall(r"[\w]+|[^\s\w]",
+                              content[start:end].decode('utf-8'))
+
+            for tok in toks:
+                tok_counts[tok] += 1
+
+            del toks
+
+        print("...tokens counted for file: %s" % file_path)
 
     tok_counts = tok_counts.most_common(top_n)
 
-    onehot_tok_idx = {}
+    onehot_tok_idx = {"UNK": 0}
 
-    tok_idx = 0
+    tok_idx = 1
 
-    for i in range(0, num_batches):
+    for tok in tok_counts.keys():
 
-        start = math.floor(i * len(content) / num_batches)
-        end = math.floor((i + 1) * len(content) / num_batches)
-
-        sent = content[start:end].decode('utf-8').split('\n')
-
-        print("...subtitles in memory for batch %d/%d" % (i + 1, num_batches))
-
-        for sent_idx in range(0, len(sent)):
-
-            sent_tok = re.findall(r"[\w]+|[^\s\w]", sent[sent_idx])
-
-            for tok in sent_tok:
-                if tok not in tok_counts:
-                    tok = "UNKNOWNTEXT"
-                if tok not in onehot_tok_idx:
-                    onehot_tok_idx[tok] = tok_idx
-                    tok_idx += 1
-
-        del sent
-
-        print("...token id's assigned for batch %d/%d" % (i + 1, num_batches))
+        if tok not in onehot_tok_idx:
+            onehot_tok_idx[tok] = tok_idx
+            tok_idx += 1
 
     np.save(write_path, onehot_tok_idx)
     print("...token id's saved")
@@ -97,74 +84,96 @@ def read_data(file_path, write_path, num_batches, top_n):
 # seq_length = max sequence length
 
 
-def data_iterator(file_path, onehot_tok_idx, num_batches, batch_size, seq_length):
-
-    with gzip.open(file_path, 'rb') as f:
-        content = f.read()
+def data_iterator(file_paths, onehot_tok_idx, num_batches, batch_size, seq_length):
 
     while True:
-        for i in range(0, num_batches):
 
-            start = math.floor(i * len(content) / num_batches)
-            end = math.floor((i + 1) * len(content) / num_batches)
+        for file_path in file_paths:
 
-            sent = content[start:end].decode('utf-8').split('\n')
+            with gzip.open(file_path, 'rb') as f:
+                content = f.read()
 
-            onehot_seq_batch = np.zeros(
-                shape=(batch_size, seq_length, len(onehot_tok_idx)), dtype="float32")
-            labels_batch = np.zeros(
-                shape=(batch_size, seq_length), dtype="int32")
+            for i in range(0, num_batches):
 
-            for batch_idx in range(0, batch_size):
+                start = math.floor(i * len(content) / num_batches)
+                end = math.floor((i + 1) * len(content) / num_batches)
 
-                for sent_idx in range(batch_idx * batch_size, (batch_idx + 1) * batch_size):
-                    if sent_idx >= len(sent):
-                        break
+                sent = content[start:end].decode('utf-8').split('\n')
 
-                    sent_tok = re.findall(r"[\w]+|[^\s\w]", sent[sent_idx])
+                onehot_seq_batch = np.zeros(
+                    shape=(batch_size, seq_length, len(onehot_tok_idx)), dtype="float32")
+                labels_batch = np.zeros(
+                    shape=(batch_size, seq_length), dtype="int32")
 
-                    for tok_idx in range(0, len(sent_tok)):
+                for batch_idx in range(0, batch_size):
 
-                        if tok_idx >= seq_length:
+                    for sent_idx in range(batch_idx * batch_size, (batch_idx + 1) * batch_size):
+                        if sent_idx >= len(sent):
                             break
 
-                        tok = sent_tok[tok_idx]
+                        sent_tok = re.findall(r"[\w]+|[^\s\w]", sent[sent_idx])
 
-                        if tok not in onehot_tok_idx:
-                            tok = "UNKNOWNTEXT"
+                        for tok_idx in range(0, len(sent_tok)):
 
-                        onehot_seq_batch[batch_idx][
-                            tok_idx][onehot_tok_idx[tok]] = 1
-                        labels_batch[batch_idx][tok_idx] = onehot_tok_idx[tok]
-                    yield onehot_seq_batch, labels_batch
+                            if tok_idx >= seq_length:
+                                break
 
-            del sent
+                            tok = sent_tok[tok_idx]
+
+                            if tok not in onehot_tok_idx:
+                                tok = "UNK"
+
+                            onehot_seq_batch[batch_idx][
+                                tok_idx][onehot_tok_idx[tok]] = 1
+                            labels_batch[batch_idx][
+                                tok_idx] = onehot_tok_idx[tok]
+                        yield onehot_seq_batch, labels_batch
+
+                del sent
 
 if __name__ == "__main__":
 
-    en_file_path = "data/english_subtitles.gz"
-    fr_file_path = "data/french_subtitles.gz"
+    en_file_sources = ["http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2008.en.shuffled.gz", "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2009.en.shuffled.gz", "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2010.en.shuffled.gz",
+                       "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2011.en.shuffled.gz", "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2012.en.shuffled.gz", "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2013.en.shuffled.gz", "http://www.statmt.org/wmt15/training-monolingual-news-crawl-v2/news.2014.en.shuffled.v2.gz"]
+    fr_file_sources = ["http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2008.fr.shuffled.gz", "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2009.fr.shuffled.gz", "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2010.fr.shuffled.gz",
+                       "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2011.fr.shuffled.gz", "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2012.fr.shuffled.gz", "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2013.fr.shuffled.gz", "http://www.statmt.org/wmt15/training-monolingual-news-crawl-v2/news.2014.fr.shuffled.v2.gz"]
+
+    en_file_paths = ["data/en_%d.gz" %
+                     i for i in range(0, len(en_file_sources))]
+    fr_file_paths = ["data/fr_%d.gz" %
+                     i for i in range(0, len(fr_file_sources))]
 
     en_write_path = "data/en_onehot.npy"
     fr_write_path = "data/fr_onehot.npy"
 
-    top_n = 80000
+    top_n = 40000
 
-    print("processing english subtitles")
+    print("processing english files")
 
-    if not os.path.isfile(en_file_path):
-        urllib.request.urlretrieve("http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.en.gz", filename=en_file_path)
+    for i in range(0, len(en_file_sources)):
 
-    print("...subtitles downloaded")
+        file_source = en_file_sources[i]
+        file_path = en_file_paths[i]
 
-    read_data(file_path = en_file_path, write_path = en_write_path, num_batches = 5, top_n = top_n)
+        if not os.path.isfile(file_source):
+            urllib.request.urlretrieve(
+                file_source, filename=file_path)
 
-    print("processing french subtitles")
+    print("...files downloaded")
 
-    if not os.path.isfile(fr_file_path):
-        urllib.request.urlretrieve(
-            "http://opus.lingfil.uu.se/download.php?f=OpenSubtitles2016/mono/OpenSubtitles2016.raw.fr.gz", filename=fr_file_path)
+    read_data(file_paths=en_file_paths, write_path=en_write_path,
+              num_batches=1, top_n=top_n)
 
-    print("...subtitles downloaded")
+    print("processing french files")
 
-#    read_data(file_path = fr_file_path, write_path = fr_write_path, num_batches = 5, top_n = top_n)
+    for i in range(0, len(fr_file_sources)):
+
+        file_source = fr_file_sources[i]
+        file_path = fr_file_paths[i]
+
+        if not os.path.isfile(file_source):
+            urllib.request.urlretrieve(
+                file_source, filename=file_path)
+    print("...files downloaded")
+
+   read_data(file_paths = fr_file_paths, write_path = fr_write_path, num_batches = 1, top_n = top_n)
