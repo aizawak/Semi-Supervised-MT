@@ -2,14 +2,20 @@ import tensorflow as tf
 import numpy as np
 from data_preprocess import data_iterator
 
-# english
-# onehot_tok_idx = np.load('data/en_onehot.npy')
-# en_file_path = "data/english_subtitles.gz"
+en_file_sources = ["http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2008.en.shuffled.gz", "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2009.en.shuffled.gz", "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2010.en.shuffled.gz",
+                   "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2011.en.shuffled.gz", "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2012.en.shuffled.gz", "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2013.en.shuffled.gz", "http://www.statmt.org/wmt15/training-monolingual-news-crawl-v2/news.2014.en.shuffled.v2.gz"]
+fr_file_sources = ["http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2008.fr.shuffled.gz", "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2009.fr.shuffled.gz", "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2010.fr.shuffled.gz",
+                   "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2011.fr.shuffled.gz", "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2012.fr.shuffled.gz", "http://www.statmt.org/wmt14/training-monolingual-news-crawl/news.2013.fr.shuffled.gz", "http://www.statmt.org/wmt15/training-monolingual-news-crawl-v2/news.2014.fr.shuffled.v2.gz"]
 
+en_file_paths = ["data/en_%d.gz" %
+                 i for i in range(0, len(en_file_sources))]
+fr_file_paths = ["data/fr_%d.gz" %
+                 i for i in range(0, len(fr_file_sources))]
 
-# french
-onehot_tok_idx = np.load('data/fr_onehot.npy').item()
-fr_file_path = "data/french_subtitles.gz"
+en_val_file_path = "data/en_val.gz"
+
+en_onehot_tok_idx = "data/en_onehot.npy"
+fr_onehot_tok_idx = "data/fr_onehot.npy"
 
 # Build LSTM graph
 def length(sequence):
@@ -20,7 +26,7 @@ def length(sequence):
 
 vocab_size = len(onehot_tok_idx)
 num_layers = 4
-num_steps = 15
+num_steps = 100
 batch_size = 20
 hidden_size = 200
 
@@ -79,7 +85,9 @@ train_op = optimizer.apply_gradients(clipped_gradients)
 
 print("graph loaded")
 
-iter_ = data_iterator(fr_file_path, onehot_tok_idx, 1, batch_size, num_steps)
+iter_ = data_iterator(en_file_paths, en_onehot_tok_idx, 1, batch_size, num_steps)
+
+val_iter_ = data_iterator([en_val_file_path], en_onehot_tok_idx, 1, batch_size, num_steps)
 
 print("iterator loaded")
 
@@ -89,14 +97,34 @@ init = tf.global_variables_initializer()
 
 print("variables initialized")
 
+epoch_iterations = 10000
+
+total_iterations = 16850000
+
+val_iterations = 20
+
 with tf.Session() as sess:
     sess.run(init)
-    for i in range(16850000):
+    for i in range(total_iterations):
         sequences_batch, labels_batch = iter_.__next__()
         
-        if (i + 1) % 10000 == 0:
+        if (i + 1) % epoch_iterations == 0:
+
             save_path = saver.save(sess, "tmp/model_%d.ckpt"%(i+1))
             print("Model saved in file: %s"%save_path)
+
+            validation_accuracy = 0
+
+            for i in range(0, val_iterations):
+
+                val_sequences_batch, val_labels_batch = iter_.__next__()
+
+                validation_accuracy += loss.eval(session=sess, feed_dict={
+                                           encoder_inputs: val_sequences_batch, raw_labels: val_labels_batch})
+
+            
+            print("step %d, validation loss %g" % (i + 1, validation_accuracy / val_iterations))
+
 
         if (i + 1) % 100 == 0:
             train_accuracy = loss.eval(session=sess, feed_dict={
