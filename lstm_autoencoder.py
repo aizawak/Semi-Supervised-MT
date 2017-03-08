@@ -29,9 +29,9 @@ def length(sequence):
 
 vocab_size = len(onehot_tok_idx)
 num_layers = 4
-num_steps = 40
-batch_size = 100
-hidden_size = 500
+num_steps = 48
+batch_size = 448
+hidden_size = 250
 
 # tensor of shape [ batch_size x num_steps x vocab_size ] with post-padding
 encoder_inputs = tf.placeholder(tf.float32, shape=(
@@ -83,7 +83,7 @@ loss = tf.contrib.legacy_seq2seq.sequence_loss(
 
 optimizer = tf.train.AdamOptimizer(1e-3)
 gradients = optimizer.compute_gradients(loss)
-clipped_gradients = [(tf.clip_by_norm(grad, 3), var) for grad, var in gradients]
+clipped_gradients = [(tf.clip_by_norm(grad, 5), var) for grad, var in gradients]
 train_op = optimizer.apply_gradients(clipped_gradients)
 
 print("graph loaded")
@@ -94,13 +94,13 @@ val_iter_ = data_iterator([en_val_subset_file_path], onehot_tok_idx, 1, batch_si
 
 print("iterator loaded")
 
-saver = tf.train.Saver(max_to_keep=50)
+saver = tf.train.Saver(max_to_keep=10)
 
 init = tf.global_variables_initializer()
 
 print("variables initialized")
 
-total_samples = 28127449
+total_samples = 1000000
 
 epoch_iterations = int(total_samples / batch_size)
 
@@ -115,7 +115,7 @@ with tf.Session() as sess:
     for i in range(total_iterations):
         sequences_batch, labels_batch = iter_.__next__()
         
-        if (i + 1) % (epoch_iterations / 5) == 0:
+        if (i + 1) % epoch_iterations == 0:
 
             validation_accuracy = 0
 
@@ -133,7 +133,7 @@ with tf.Session() as sess:
             save_path = saver.save(sess, "tmp/model_%d_%g.ckpt"%(i + 1, validation_accuracy))
             print("Model saved in file: %s"%save_path)
 
-        if (i + 1) % 100 == 0:
+        if (i + 1) % 20 == 0:
             train_accuracy = loss.eval(session=sess, feed_dict={
                                        encoder_inputs: sequences_batch, raw_labels: labels_batch})
             print("step %d, training loss %g" % (i + 1, train_accuracy))
