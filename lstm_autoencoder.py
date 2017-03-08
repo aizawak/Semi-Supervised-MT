@@ -62,8 +62,12 @@ targets = tf.unstack(raw_labels, axis=1)
 # list of 1D tensors [ batch_size ] of length num_steps
 loss_weights = tf.unstack(tf.cast(mask, tf.float32), axis=1)
 
+# dropout
+dropout = tf.placeholder(tf.float32, name="placeholder_dropout")
+
 lstm = tf.contrib.rnn.BasicLSTMCell(
     hidden_size, forget_bias=1, state_is_tuple=True)
+lstm = tf.contrib.rnn.DropoutWrapper(lstm, output_keep_prob=dropout)
 stacked_lstm = tf.contrib.rnn.MultiRNNCell(
     [lstm] * num_layers, state_is_tuple=True)
 
@@ -81,7 +85,8 @@ preds = [tf.matmul(step, decoder_weights) +
 loss = tf.contrib.legacy_seq2seq.sequence_loss(
     logits=preds, targets=targets, weights=loss_weights)
 
-optimizer = tf.train.AdamOptimizer(1e-3)
+# optimizer = tf.train.GradientDescentOptimizer(.01)
+optimizer = tf.train.AdamOptimizer(.001)
 gradients = optimizer.compute_gradients(loss)
 clipped_gradients = [(tf.clip_by_norm(grad, 5), var) for grad, var in gradients]
 train_op = optimizer.apply_gradients(clipped_gradients)
@@ -108,7 +113,11 @@ total_iterations = epoch_iterations * 10
 
 total_val_samples = 3000
 
-val_iterations = total_val_samples / batch_size
+val_iterations = int(total_val_samples / batch_size / 20)
+
+print_iterations = 10
+
+train_keep_prob = .2
 
 with tf.Session() as sess:
     sess.run(init)
@@ -119,30 +128,30 @@ with tf.Session() as sess:
         sequences_batch, labels_batch = iter_.__next__()
         
         train_accuracy += loss.eval(session=sess, feed_dict={
-                                   encoder_inputs: sequences_batch, raw_labels: labels_batch})
+                                   encoder_inputs: sequences_batch, raw_labels: labels_batch, dropout: 1.0})
         
         if (i + 1) % epoch_iterations == 0:
 
             validation_accuracy = 0
 
-            for i in range(0, val_iterations):
+            for j in range(0, val_iterations):
 
                 val_sequences_batch, val_labels_batch = val_iter_.__next__()
 
                 validation_accuracy += loss.eval(session=sess, feed_dict={
-                                           encoder_inputs: val_sequences_batch, raw_labels: val_labels_batch})
+                                           encoder_inputs: val_sequences_batch, raw_labels: val_labels_batch, dropout: 1.0})
 
-            validation_accuracy = validation_accuracy / val_iterations
+            validation_accuracy /= val_iterations
 
             print("step %d, validation loss %g" % (i + 1, validation_accuracy))
 
             save_path = saver.save(sess, "tmp/model_%d_%g.ckpt"%(i + 1, validation_accuracy))
             print("Model saved in file: %s"%save_path)
 
-        if (i + 1) % 20 == 0:
-            train_accuracy /= 20
+        if (i + 1) % print_iterations == 0:
+            train_accuracy /= print_iterations
             print("step %d, training loss %g" % (i + 1, train_accuracy))
             train_accuracy = 0
 
         train_op.run(session=sess, feed_dict={
-                     encoder_inputs: sequences_batch, raw_labels: labels_batch})
+                     encoder_inputs: sequences_batch, raw_labels: labels_batch, dropout: train_keep_prob})
