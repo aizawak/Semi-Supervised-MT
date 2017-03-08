@@ -112,8 +112,14 @@ val_iterations = total_val_samples / batch_size
 
 with tf.Session() as sess:
     sess.run(init)
+
+    train_accuracy = 0
+
     for i in range(total_iterations):
         sequences_batch, labels_batch = iter_.__next__()
+        
+        train_accuracy += loss.eval(session=sess, feed_dict={
+                                   encoder_inputs: sequences_batch, raw_labels: labels_batch})
         
         if (i + 1) % epoch_iterations == 0:
 
@@ -134,9 +140,9 @@ with tf.Session() as sess:
             print("Model saved in file: %s"%save_path)
 
         if (i + 1) % 20 == 0:
-            train_accuracy = loss.eval(session=sess, feed_dict={
-                                       encoder_inputs: sequences_batch, raw_labels: labels_batch})
+            train_accuracy /= 20
             print("step %d, training loss %g" % (i + 1, train_accuracy))
+            train_accuracy = 0
 
         train_op.run(session=sess, feed_dict={
                      encoder_inputs: sequences_batch, raw_labels: labels_batch})
