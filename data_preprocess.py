@@ -77,7 +77,7 @@ def read_data(file_paths, write_path, num_batches, top_n):
     print("...token id's saved")
 
 
-def generate_val(file_path, write_path, num_val):
+def sample_data(file_path, write_path, num_samples):
 
     with gzip.open(file_path, 'rb') as f:
         content = f.read().decode('utf-8').split('\n')
@@ -86,12 +86,12 @@ def generate_val(file_path, write_path, num_val):
 
     np.random.shuffle(content)
 
-    raw = bytearray("\n".join(content[0:num_val]), "utf-8")
+    raw = bytearray("\n".join(content[0:num_samples]), "utf-8")
 
     with gzip.open(write_path, 'wb') as wf:
         wf.write(raw)
 
-    print("...validation set saved")
+    print("...samples saved")
 
 # Loop through batches and generate one-hot encodings of sequences and
 # sequence labels.
@@ -196,7 +196,7 @@ if __name__ == "__main__":
     read_data(file_paths=[en_file_paths[6]], write_path=en_write_path,
               num_batches=1, top_n=top_n)
 
-    generate_val(en_val_file_path, en_val_write_path, 3000)
+    sample_data(en_val_file_path, en_val_write_path, 3000)
 
     print("processing french files")
 
@@ -218,4 +218,4 @@ if __name__ == "__main__":
     read_data(file_paths=[fr_file_paths[6]], write_path=fr_write_path,
               num_batches=1, top_n=top_n)
 
-    generate_val(fr_val_file_path, fr_val_write_path, 3000)
+    sample_data(fr_val_file_path, fr_val_write_path, 3000)
