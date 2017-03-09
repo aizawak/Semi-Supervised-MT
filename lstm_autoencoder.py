@@ -30,7 +30,7 @@ def length(sequence):
 vocab_size = len(onehot_tok_idx)
 num_layers = 4
 num_steps = 48
-batch_size = 448
+batch_size = 384
 hidden_size = 250
 
 # tensor of shape [ batch_size x num_steps x vocab_size ] with post-padding
@@ -86,7 +86,7 @@ loss = tf.contrib.legacy_seq2seq.sequence_loss(
     logits=preds, targets=targets, weights=loss_weights)
 
 # optimizer = tf.train.GradientDescentOptimizer(.01)
-optimizer = tf.train.AdamOptimizer(.001)
+optimizer = tf.train.AdamOptimizer(.00001)
 gradients = optimizer.compute_gradients(loss)
 clipped_gradients = [(tf.clip_by_norm(grad, 5), var) for grad, var in gradients]
 train_op = optimizer.apply_gradients(clipped_gradients)
@@ -105,19 +105,17 @@ init = tf.global_variables_initializer()
 
 print("variables initialized")
 
-total_samples = 1000000
-
-epoch_iterations = int(total_samples / batch_size)
-
-total_iterations = epoch_iterations * 10
-
+total_train_samples = 1000000
 total_val_samples = 3000
 
-val_iterations = int(total_val_samples / batch_size / 20)
+epoch_iterations = int(total_train_samples / batch_size)
+total_iterations = epoch_iterations * 10
+val_iterations = int(total_val_samples / batch_size)
 
-print_iterations = 10
+print_train_iterations = 10
+print_val_iterations = int(epoch_iterations / 20)
 
-train_keep_prob = .2
+train_keep_prob = .7
 
 with tf.Session() as sess:
     sess.run(init)
@@ -130,7 +128,7 @@ with tf.Session() as sess:
         train_accuracy += loss.eval(session=sess, feed_dict={
                                    encoder_inputs: sequences_batch, raw_labels: labels_batch, dropout: 1.0})
         
-        if (i + 1) % epoch_iterations == 0:
+        if (i + 1) % print_val_iterations == 0:
 
             validation_accuracy = 0
 
@@ -145,11 +143,12 @@ with tf.Session() as sess:
 
             print("step %d, validation loss %g" % (i + 1, validation_accuracy))
 
-            save_path = saver.save(sess, "tmp/model_%d_%g.ckpt"%(i + 1, validation_accuracy))
+        if (i + 1) % epoch_iterations == 0:
+            save_path = saver.save(sess, "tmp/model_%d.ckpt"%(i + 1))
             print("Model saved in file: %s"%save_path)
 
-        if (i + 1) % print_iterations == 0:
-            train_accuracy /= print_iterations
+        if (i + 1) % print_train_iterations == 0:
+            train_accuracy /= print_train_iterations
             print("step %d, training loss %g" % (i + 1, train_accuracy))
             train_accuracy = 0
 
