@@ -2,6 +2,14 @@ import tensorflow as tf
 import numpy as np
 from data_preprocess import data_iterator
 
+en_val_subset_file_path = "data/en_val_subset.gz"
+fr_val_subset_file_path = "data/fr_val_subset.gz"
+
+en_onehot_tok_idx = "data/en_onehot.npy"
+fr_onehot_tok_idx = "data/fr_onehot.npy"
+
+onehot_tok_idx = np.load(en_onehot_tok_idx).item()
+
 #### LOAD GRAPH
 
 # Build LSTM graph
@@ -81,16 +89,6 @@ saver = tf.train.Saver()
 
 #############################
 
-en_val_subset_file_path = "data/en_val_subset.gz"
-fr_val_subset_file_path = "data/fr_val_subset.gz"
-
-en_onehot_tok_idx = "data/en_onehot.npy"
-fr_onehot_tok_idx = "data/fr_onehot.npy"
-
-onehot_tok_idx = np.load(en_onehot_tok_idx).item()
-
-batch_size = 384
-num_steps = 48
 
 val_iter_ = data_iterator([en_val_subset_file_path], onehot_tok_idx, 1, batch_size, num_steps)
 
