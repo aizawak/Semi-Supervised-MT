@@ -18,7 +18,7 @@ fr_val_subset_file_path = "data/fr_val_subset.gz"
 en_onehot_tok_idx = "data/en_onehot.npy"
 fr_onehot_tok_idx = "data/fr_onehot.npy"
 
-onehot_tok_idx = np.load(en_onehot_tok_idx).item()
+onehot_tok_idx = np.load(fr_onehot_tok_idx).item()
 
 # Build LSTM graph
 def length(sequence):
@@ -86,16 +86,16 @@ loss = tf.contrib.legacy_seq2seq.sequence_loss(
     logits=preds, targets=targets, weights=loss_weights)
 
 # optimizer = tf.train.GradientDescentOptimizer(.01)
-optimizer = tf.train.AdamOptimizer(.00001)
+optimizer = tf.train.AdamOptimizer(.001)
 gradients = optimizer.compute_gradients(loss)
 clipped_gradients = [(tf.clip_by_norm(grad, 5), var) for grad, var in gradients]
 train_op = optimizer.apply_gradients(clipped_gradients)
 
 print("graph loaded")
 
-iter_ = data_iterator([en_file_paths[6]], onehot_tok_idx, 1, batch_size, num_steps)
+iter_ = data_iterator([fr_file_paths[6]], onehot_tok_idx, 1, batch_size, num_steps)
 
-val_iter_ = data_iterator([en_val_subset_file_path], onehot_tok_idx, 1, batch_size, num_steps)
+val_iter_ = data_iterator([fr_val_subset_file_path], onehot_tok_idx, 1, batch_size, num_steps)
 
 print("iterator loaded")
 

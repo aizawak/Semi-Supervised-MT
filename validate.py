@@ -99,7 +99,7 @@ val_iterations = int(total_val_samples / batch_size)
 
 with tf.Session() as sess:
     sess.run(init)
-    saver.restore(sess, "tmp/second_run/model_2604.ckpt")
+    saver.restore(sess, "tmp/second_run/model_7812.ckpt")
     
     print("model loaded")
 
